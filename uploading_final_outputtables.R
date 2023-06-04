@@ -10,8 +10,7 @@ myfiles = list.files(path=path1,
 
 files_to_upload <- grep("END", myfiles, value = TRUE) 
 
-i <- 1
-
+for (i in 1:length(files_to_upload)){
 x <- read.csv(files_to_upload[i])
 
 ### extracting the filename from the original pathname
@@ -22,3 +21,4 @@ filename <- substring(filename,1, nchar(filename)-4)
 filename <- paste0(path1, filename,".xls")
 
 write.xlsx(x, filename)
+}
