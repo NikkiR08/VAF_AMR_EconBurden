@@ -53,3 +53,6 @@ rsconnect/
 
 # excel files
 *.xlsx
+
+# data outputs
+*.RData
