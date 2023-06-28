@@ -27,7 +27,7 @@ baseline_vac <- unique(baseline$vaccine_id)
 # "Klebsiella pneumoniae - all_0.7_0.7_5 years_All_6 weeks & elderly age group"
 # "Mycobacterium tuberculosis - Improved_0.8_0.7_10 years_All_0 weeks + boost every 10 years"   
 # "Streptococcus pneumoniae - Improved_0.7_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6 weeks"
-#### !!! I noticed ones with lower e.g. coverage had higher case values .. so switched to keeping these..
+#### !!! I noticed ones with lower e.g. efficacy had higher case values .. so switched to keeping these..
 # "Haemophilus influenzae type B_0.69_0.9_5 years_All_6, 10, 14 weeks"
 # "Streptococcus pneumoniae - Improved_0.5_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6 weeks"
 
