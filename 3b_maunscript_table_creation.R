@@ -9,159 +9,24 @@ library(ggplot2)
 
 ##### read in data
 
-myfiles = list.files(path="C:/Users/nichola.naylor/Documents/WHO_2023/VAF_globalburden/outputs/fulloutput_chunks/",
+myfiles = list.files(path="C:/Users/nichola.naylor/Documents/WHO_2023/VAF_AMR_EconBurden/outputs/fulloutput_chunks/",
                      pattern="*.RData", full.names = TRUE)
 
-#### final table for database ######
+
+##### !!! currently updating to handle the additional syndromes
+
+########### !!! need to update to include an All syndromes and for the specific pathogen-syndromes below
+### psuedo  - "blood stream, lower respiratory and thorax"   
+###### in our results equivalent to "BSI" +  "LRI and thorax infections"
+### strep -"blood stream, central nervous system, cardiac, and lower respiratory"
+##### in our results equivalent to "BSI", "CNS infections", "Cardian infections" and "LRI and thorax infections"
+### these will replace other values after main code runs so be careful when looking at numbers in intermediate table outputs for these pathogens
+### there is currently also duplication in function/creation across this and WHO output code
+### but again keeping as is so plot code reads in correct up-to-date files once this script has been run
+
+#### MEDIAN & IQR INSTEAD #################
 hospital_cost_l <- list()
-for (i in 1:length(myfiles)){
-  load(myfiles[i])
-  vaccine_output_dt[WHO.Region=="PAHO", WHO.Region := "AMRO"]
-hospital_cost <- vaccine_output_dt %>% group_by(WHO.Region, Pathogen, Infectious.syndrome,
-                                                vaccine_id, run) %>%
-  summarise(who_region_cost_A = sum(avertable_cost_cases, na.rm=TRUE),
-            who_region_cost_T = sum(cost_cases, na.rm=TRUE)) %>%
-  group_by(WHO.Region, Pathogen, Infectious.syndrome, vaccine_id) %>%
-  summarise(Mean_avert_costing = mean(who_region_cost_A, na.rm=TRUE),
-            LOWUI_avert_costing = quantile(who_region_cost_A,0.025, na.rm = TRUE),
-            HIGHUI_avert_costing = quantile(who_region_cost_A,0.975, na.rm = TRUE),
-            Mean_total_costing = mean(who_region_cost_T, na.rm=TRUE),
-            LOWUI_total_costing = quantile(who_region_cost_T,0.025, na.rm = TRUE),
-            HIGHUI_total_costing = quantile(who_region_cost_T,0.975, na.rm = TRUE)) %>%
-  mutate(across(Mean_avert_costing:HIGHUI_total_costing,
-                ~ format(., big.mark = ",", scientific = F)))%>%
-  mutate(mean_ci_averted = str_c(Mean_avert_costing, " ( ", LOWUI_avert_costing, "-",
-                                 HIGHUI_avert_costing," ) "),
-         mean_ci_total = str_c(Mean_total_costing, " ( ", LOWUI_total_costing, "-",
-                                 HIGHUI_total_costing," ) ")) %>%
-  as.data.table()
-hospital_cost_l[[i]] <- hospital_cost
-}
 
-hospital_c <- rbindlist(hospital_cost_l)
-hospital_c <- hospital_c[!is.na(Pathogen)]
-hospital_c <- hospital_c[ , -c("Mean_avert_costing",  "LOWUI_avert_costing",
-                               "HIGHUI_avert_costing", "Mean_total_costing" ,
-                               "LOWUI_total_costing" , "HIGHUI_total_costing" )]
-hospital_c <- dcast(hospital_c, Pathogen + Infectious.syndrome +
-                             vaccine_id ~ WHO.Region, value.var = c("mean_ci_total",
-                                                                    "mean_ci_averted"))
-
-hospital_c[, c("vaccine_target_disease","efficacy" ,"coverage"  ,
-                       "duration", "target disease","target population") := tstrsplit(vaccine_id, "_", fixed=TRUE)]
-
-###!!! not including those to mapped to any vaccine ID
-hospital_c <- hospital_c[vaccine_id!="_NA_NA___"]
-write.csv(hospital_c, file="outputs/END_hospital_costs_output.csv")
-### note in the one sent there is also "total" but not added here in this version, find total vaccine/pathogen level results below
-rm(hospital_c)
-rm(hospital_cost_l)
-
-
-#### SAME BUT FOR BEDDAYS ######
-hospital_cost_l <- list()
-for (i in 1:length(myfiles)){
-  load(myfiles[i])
-  vaccine_output_dt[WHO.Region=="PAHO", WHO.Region := "AMRO"]
-  hospital_cost <- vaccine_output_dt %>% group_by(WHO.Region, Pathogen, Infectious.syndrome,
-                                                  vaccine_id, run) %>%
-    summarise(who_region_cost_A = sum(avertable_days_cases, na.rm=TRUE),
-              who_region_cost_T = sum(days_cases, na.rm=TRUE)) %>%
-    group_by(WHO.Region, Pathogen, Infectious.syndrome, vaccine_id) %>%
-    summarise(Mean_avert_costing = mean(who_region_cost_A, na.rm=TRUE),
-              LOWUI_avert_costing = quantile(who_region_cost_A,0.025, na.rm = TRUE),
-              HIGHUI_avert_costing = quantile(who_region_cost_A,0.975, na.rm = TRUE),
-              Mean_total_costing = mean(who_region_cost_T, na.rm=TRUE),
-              LOWUI_total_costing = quantile(who_region_cost_T,0.025, na.rm = TRUE),
-              HIGHUI_total_costing = quantile(who_region_cost_T,0.975, na.rm = TRUE)) %>%
-    mutate(across(Mean_avert_costing:HIGHUI_total_costing,
-                  ~ format(., big.mark = ",", scientific = F)))%>%
-    mutate(mean_ci_averted = str_c(Mean_avert_costing, " ( ", LOWUI_avert_costing, "-",
-                                   HIGHUI_avert_costing," ) "),
-           mean_ci_total = str_c(Mean_total_costing, " ( ", LOWUI_total_costing, "-",
-                                 HIGHUI_total_costing," ) ")) %>%
-    as.data.table()
-  hospital_cost_l[[i]] <- hospital_cost
-}
-
-hospital_c <- rbindlist(hospital_cost_l)
-hospital_c <- hospital_c[!is.na(Pathogen)]
-hospital_c <- hospital_c[ , -c("Mean_avert_costing",  "LOWUI_avert_costing",
-                               "HIGHUI_avert_costing", "Mean_total_costing" ,
-                               "LOWUI_total_costing" , "HIGHUI_total_costing" )]
-hospital_c <- dcast(hospital_c, Pathogen + Infectious.syndrome +
-                      vaccine_id ~ WHO.Region, value.var = c("mean_ci_total",
-                                                             "mean_ci_averted"))
-
-hospital_c[, c("vaccine_target_disease","efficacy" ,"coverage"  ,
-               "duration", "target disease","target population") := tstrsplit(vaccine_id, "_", fixed=TRUE)]
-
-###!!! not including those to mapped to any vaccine ID
-hospital_c <- hospital_c[vaccine_id!="_NA_NA___"]
-write.csv(hospital_c, file="outputs/END_hospital_costs_output_beddays.csv")
-### note in the one sent there is also "total" but not added here in this version, find total vaccine/pathogen level results below
-rm(hospital_c)
-rm(hospital_cost_l)
-
-#### Global but to put in final GHO database ######
-hospital_cost_l <- list()
-for (i in 1:length(myfiles)){
-  load(myfiles[i])
-  vaccine_output_dt[WHO.Region=="PAHO", WHO.Region := "AMRO"]
-  hospital_cost <- vaccine_output_dt %>% group_by(Pathogen, Infectious.syndrome,
-                                                  vaccine_id, run) %>%
-    summarise(who_region_cost_A = sum(avertable_cost_cases, na.rm=TRUE),
-              who_region_cost_T = sum(cost_cases, na.rm=TRUE),
-              who_region_days_A = sum(avertable_days_cases, na.rm=TRUE),
-              who_region_days_T = sum(days_cases, na.rm=TRUE)) %>%
-    group_by(Pathogen, Infectious.syndrome, vaccine_id) %>%
-    summarise(Mean_avert_costing = mean(who_region_cost_A, na.rm=TRUE),
-              LOWUI_avert_costing = quantile(who_region_cost_A,0.025, na.rm = TRUE),
-              HIGHUI_avert_costing = quantile(who_region_cost_A,0.975, na.rm = TRUE),
-              Mean_total_costing = mean(who_region_cost_T, na.rm=TRUE),
-              LOWUI_total_costing = quantile(who_region_cost_T,0.025, na.rm = TRUE),
-              HIGHUI_total_costing = quantile(who_region_cost_T,0.975, na.rm = TRUE),
-              Mean_avert_days = mean(who_region_days_A, na.rm=TRUE),
-              LOWUI_avert_days = quantile(who_region_days_A,0.025, na.rm = TRUE),
-              HIGHUI_avert_days = quantile(who_region_days_A,0.975, na.rm = TRUE),
-              Mean_total_days = mean(who_region_days_T, na.rm=TRUE),
-              LOWUI_total_days = quantile(who_region_days_T,0.025, na.rm = TRUE),
-              HIGHUI_total_days = quantile(who_region_days_T,0.975, na.rm = TRUE)) %>%
-    mutate(across(Mean_avert_costing:HIGHUI_total_days,
-                  ~ format(., big.mark = ",", scientific = F)))%>%
-    mutate(mean_ci_averted_cost = str_c(Mean_avert_costing, " ( ", LOWUI_avert_costing, "-",
-                                   HIGHUI_avert_costing," ) "),
-           mean_ci_total_cost = str_c(Mean_total_costing, " ( ", LOWUI_total_costing, "-",
-                                 HIGHUI_total_costing," ) "),
-           mean_ci_averted_days = str_c(Mean_avert_days, " ( ", LOWUI_avert_days, "-",
-                                        HIGHUI_avert_days," ) "),
-           mean_ci_total_days = str_c(Mean_total_days, " ( ", LOWUI_total_days, "-",
-                                      HIGHUI_total_days," ) ")) %>%
-    as.data.table()
-  hospital_cost_l[[i]] <- hospital_cost
-}
-
-hospital_c <- rbindlist(hospital_cost_l)
-hospital_c <- hospital_c[!is.na(Pathogen)]
-hospital_c <- hospital_c[ , -c("Mean_avert_costing",  "LOWUI_avert_costing",
-                               "HIGHUI_avert_costing", "Mean_total_costing" ,
-                               "LOWUI_total_costing" , "HIGHUI_total_costing",
-                               "Mean_avert_days",  "LOWUI_avert_days",
-                               "HIGHUI_avert_days", "Mean_total_days" ,
-                               "LOWUI_total_days" , "HIGHUI_total_days")]
-
-hospital_c[, c("vaccine_target_disease","efficacy" ,"coverage"  ,
-               "duration", "target disease","target population") := tstrsplit(vaccine_id, "_", fixed=TRUE)]
-
-###!!! not including those to mapped to any vaccine ID
-hospital_c <- hospital_c[vaccine_id!="_NA_NA___"]
-write.csv(hospital_c, file="outputs/END_hospital_costs_output_global.csv")
-### note in the one sent there is also "total" but not added here in this version, find total vaccine/pathogen level results below
-rm(hospital_c)
-rm(hospital_cost_l)
-
-#### SAME TABLE BUT MEDIAN & IQR INSTEAD #################
-hospital_cost_l <- list()
 for (i in 1:length(myfiles)){
   load(myfiles[i])
   vaccine_output_dt[WHO.Region=="PAHO", WHO.Region := "AMRO"]
@@ -200,10 +65,9 @@ hospital_c[, c("vaccine_target_disease","efficacy" ,"coverage"  ,
 
 ###!!! not including those to mapped to any vaccine ID
 hospital_c <- hospital_c[vaccine_id!="_NA_NA___"]
+
+
 write.csv(hospital_c, file="outputs/END_hospital_costs_output_median.csv")
-### note in the one sent there is also "total" but not added here in this version, find total vaccine/pathogen level results below
-rm(hospital_c)
-rm(hospital_cost_l)
 
 
 ######## REGION + ALL LEVELS ############
