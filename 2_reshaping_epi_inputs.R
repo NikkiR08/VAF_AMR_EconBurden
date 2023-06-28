@@ -33,7 +33,7 @@ names(high_scenario)[names(high_scenario) == 'VO'] <- 'target_population'
 colnames(high_scenario) <- gsub('_high','',colnames(high_scenario))
 
 cases2 <- read.csv("data_inputs/case_deaths_impact_by_vaccine_with_current_coverage.csv")
-cases2$VC==cases2$VO
+cases2$VO==cases2$VC
 ### chaelin stated that VC = base and this only has baseline results so assuming there is no high coverage scenario
 cases2 <- as.data.table(cases2)
 current_scenario <- cases2[ , -c("VO")]
@@ -41,10 +41,20 @@ current_scenario <- cases2[ , -c("VO")]
 names(current_scenario)[names(current_scenario) == 'VC'] <- 'target_population'
 colnames(current_scenario) <- gsub('_base','',colnames(current_scenario))
 
+### update coverage variable for current_coverage so that it doesn't wrongly get lump with the improved scenarios if it matches
+current_scenario[ , Efficacy := as.character(Efficacy)]
+current_scenario[ , Efficacy := as.character("current")]
+current_scenario[ , Coverage := as.character(Coverage)]
+current_scenario[ , Coverage := "current"]
+
 ## remove hflag from previous
 baseline <- baseline[ ,-c("hflag")]
-high_scenario <- high_scenario[ , -c("hflag")]
+baseline[ , Efficacy := as.character(Efficacy)] ## change format so can bind later
+baseline[ , Coverage := as.character(Coverage)]
 
+high_scenario <- high_scenario[ , -c("hflag")]
+high_scenario[ , Efficacy := as.character(Efficacy)] ## change format so can bind later
+high_scenario[ , Coverage := as.character(Coverage)]
 
 save(baseline, file="data_inputs/epi_inputs_baseline.RData")
 save(high_scenario, file="data_inputs/epi_inputs_high_scenario.RData")
@@ -64,7 +74,7 @@ all_data <- unique(all_data)
 
 save(all_data, file="data_inputs/epi_inputs_all.RData")
 
-############### seeing which are missing from cost data
+############### seeing which are missing from cost data ####################################
 ## data
 load("data_inputs/epi_inputs_all.RData") ## cases
 cases <- all_data
