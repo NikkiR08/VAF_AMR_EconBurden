@@ -357,19 +357,10 @@ deaths.prod.global.syndrome <- deaths.prod.global[, lapply(.SD, sum, na.rm=TRUE)
                                        ),
                                        .SDcols=c("averted",
                                                  "total")]
-deaths.prod.global <- deaths.prod.global[, lapply(.SD, sum, na.rm=TRUE),
-                                                  by = c("Pathogen",
-                                                         "vaccine_id" #,
-                                                         # "Antibiotic.class",
-                                                         #"Infectious.syndrome"
-                                                  ),
-                                                  .SDcols=c("averted",
-                                                            "total")]
+## remove duplicates
+deaths.prod.global.syndrome <- distinct(deaths.prod.global.syndrome)
 
-deaths.prod.global$Infectious.syndrome <- "Total"
-
-deaths.prod.global <- rbind(deaths.prod.global, deaths.prod.global.syndrome)
-write.csv(deaths.prod, file="outputs/END_productivity_loss_deaths_global.csv")
+write.csv(deaths.prod.global.syndrome, file="outputs/END_productivity_loss_deaths_global.csv")
 
 ############## ****** ALL Levels ******########
 total_wage_noage_all <- function(hc.prod) {
