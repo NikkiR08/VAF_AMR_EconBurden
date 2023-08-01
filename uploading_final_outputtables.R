@@ -2,7 +2,8 @@
 
 library(openxlsx)
 
-path1 <- "C:/Users/nichola.naylor/Documents/WHO_2023/VAF_AMR_EconBurden/outputs/"
+#### !!! update "XXXXX" to e.g. "C:/Users..." depending on where project saved
+path1 <- "XXXXXX/VAF_AMR_EconBurden/outputs/"
 
 myfiles = list.files(path=path1,
                      pattern="*.csv", full.names = TRUE)
