@@ -9,7 +9,8 @@ library(ggplot2)
 
 ##### read in data
 
-myfiles = list.files(path="C:/Users/nicho/OneDrive/Documents/VAF_AMR_EconBurden/outputs/fulloutput_chunks/",
+#### !!! update "XXXXX" to e.g. "C:/Users..." depending on where project saved
+myfiles = list.files(path="XXXXX/VAF_AMR_EconBurden/outputs/fulloutput_chunks/",
                      pattern="*.RData", full.names = TRUE)
 
 ### split into the ones that need adjusting and those that don't
