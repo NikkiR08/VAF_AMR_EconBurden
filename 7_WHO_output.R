@@ -657,8 +657,6 @@ Hib_93 <- vaccine_output_dt
 
 load("outputs/fulloutput_chunks/resultsHaem29.RData")
 Hib_69 <- vaccine_output_dt
-
-
 rm(vaccine_output_dt)
 
 Hib <- rbind(Hib_69,Hib_93)
