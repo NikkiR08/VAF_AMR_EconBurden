@@ -31,11 +31,15 @@ temp <- los.cc.DRI[syndrome=="BSI" &
                      level=="global"]
 temp <- temp[1,]
 
-los.cc.DRI[TE.final<0, TE.final:=temp$TE.final]
-los.cc.DRI[TE.final<0, seTE.final:=temp$seTE.final]
+los.cc.DRI[TE.final<0 & syndrome=="BSI" &
+              class=="carbapenems", TE.final:=temp$TE.final]
+los.cc.DRI[TE.final<0 & syndrome=="BSI" &
+              class=="carbapenems", TE.final:=temp$TE.final]
 
-los.cc.DRI[TE.final<0, level:=temp$level]
-los.cc.DRI[TE.final<0, no.studies:=temp$no.studies]
+los.cc.DRI[TE.final<0 & syndrome=="BSI" &
+             class=="carbapenems", TE.final:=temp$TE.final]
+los.cc.DRI[TE.final<0 & syndrome=="BSI" &
+             class=="carbapenems", TE.final:=temp$TE.final]
 
 los.cc.thin.DRI <- los.cc.DRI[ , c("iso3c.x","whoc.region", "syndrome","class","gram.stain","TE.final","seTE.final","ID","no.studies","level")]
 list.los.cc.DRI <- rep(list(los.cc.thin.DRI),n.samples)
