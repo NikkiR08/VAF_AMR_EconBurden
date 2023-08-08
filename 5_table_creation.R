@@ -10,7 +10,7 @@ library(ggplot2)
 ##### read in data
 
 #### !!! update "XXXXX" to e.g. "C:/Users..." depending on where project saved
-myfiles = list.files(path="XXXXX/VAF_AMR_EconBurden/outputs/fulloutput_chunks/",
+myfiles = list.files(path="C:/Users/nicho/OneDrive/Documents/VAF_AMR_EconBurden/outputs/fulloutput_chunks/",
                      pattern="*.RData", full.names = TRUE)
 
 ### split into the ones that need adjusting and those that don't
@@ -855,6 +855,46 @@ save(hospital_c,file="outputs/hospitalC_global_los.RData")
 rm(hospital_c)
 rm(hospitalC_region_averted)
 rm(hospital_c_l)
+
+###### !!! problem is this isn't population weighted & previous unit costs are
+### produce country level averages, then weight using population like for AMR-UCR code:
+
+######## GLOBAL + UNIT - population weighted ############
+hospital_c_l <- list()
+
+N <- as.data.table(read.csv("data_all/Population-EstimatesData_092020.csv"))
+
+N <- N[Indicator.Code=="SP.POP.TOTL"] ## total population
+
+### keep 2019 values
+N <- N[ , c("Country.Code","X2019")]
+setnames(N, "X2019", "npop")
+
+for (i in 1:length(myfiles)){
+  
+  load(myfiles[i])
+  
+  vaccine_output_dt[WHO.Region=="PAHO", WHO.Region := "AMRO"]
+ x <-  merge(vaccine_output_dt,N, by.x="iso3c",by.y="Country.Code",all.x=TRUE,all.y=FALSE)
+  hospitalC_region_averted <- x %>% 
+    filter(!is.na(Pathogen) & !is.na(npop) & vaccine_id!="_NA_NA___") %>%
+    group_by(Pathogen, class, Infectious.syndrome,run) %>%
+    summarise(weighted_costing_los = weighted.mean(los.cost, npop)) %>%
+    group_by(Pathogen, class, Infectious.syndrome) %>%
+    summarise(Median_unitcost = median(weighted_costing_los, na.rm=TRUE),
+              LOWIQR_unitcost = quantile(weighted_costing_los,0.25, na.rm = TRUE),
+              HIGIQR_unitcost = quantile(weighted_costing_los,0.75, na.rm = TRUE)) %>%
+    as.data.table()
+  hospital_c_l[[i]] <- hospitalC_region_averted
+}
+
+
+hospital_c<- rbindlist(hospital_c_l)
+save(hospital_c,file="outputs/hospitalC_global_los_npop.RData")
+rm(hospital_c)
+rm(hospitalC_region_averted)
+rm(hospital_c_l)
+
 
 ######## GLOBAL Hospital Costs to get 1 final big number ############
 
