@@ -841,17 +841,79 @@ total.cost.plot(all.dt)
 #### unit cost plotting code #####
 
 #### running using global unit cost from combining_cost_cases_NEW
+
+
+
+
+# ggplot(UNITcost_averted_global, aes(x=interaction(Exposure_Group), y=Median_unitcost, 
+#                                     fill=Infectious.syndrome)) + 
+#   geom_bar(position=position_dodge(), stat="identity",
+#            colour="black", # Use black outlines,
+#            size=.3) +      # Thinner lines
+#   geom_errorbar(aes(ymin=LOWIQR_unitcost, ymax=HIGIQR_unitcost),
+#                 size=.3,    # Thinner lines
+#                 width=.2,
+#                 position=position_dodge(.9)) +
+#   xlab("Resistance & Bacterial Exposure") +
+#   ylab("Hospital Cost per Case (2019 USD)") +
+#   ggtitle("Global Averages") +
+#   scale_fill_viridis_d()+
+#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+#   coord_cartesian(ylim=c(NA, 30000), expand = FALSE)
+
+#### log scale
+# ggplot(UNITcost_averted_global, aes(x=interaction(Exposure_Group), y=Median_unitcost, 
+#                                     fill=Infectious.syndrome)) + 
+#   geom_bar(position=position_dodge(), stat="identity",
+#            colour="black", # Use black outlines,
+#            size=.3) +      # Thinner lines
+#   geom_errorbar(aes(ymin=LOWIQR_unitcost, ymax=HIGIQR_unitcost),
+#                 size=.3,    # Thinner lines
+#                 width=.2,
+#                 position=position_dodge(.9)) +
+#   xlab("Resistance & Bacterial Exposure") +
+#   ylab("Hospital Cost per Case (2019 USD)") +
+#   ggtitle("Global Averages") +
+#   scale_fill_viridis_d()+
+#   scale_y_continuous(trans="log10")+
+#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+### multi panel by gram stain
 load("outputs/hospitalC_global_los.RData")
-UNITcost_averted_global <- hospital_c
+
+## remove TB !!!
+UNITcost_averted_global <- as.data.table(hospital_c) 
+UNITcost_averted_global <- UNITcost_averted_global[Infectious.syndrome !="TB"]
 UNITcost_averted_global[ ,Exposure_Group := paste(class,Pathogen)]
 
-UNITcost_averted_global <- UNITcost_averted_global %>% complete(Exposure_Group, 
-                                                                nesting(Infectious.syndrome))
+## link gram stain
+bug_dic <- read.csv("data_all/bug_gram.csv")
 
+UNITcost_averted_global2 <- merge(UNITcost_averted_global,bug_dic, 
+                                  by.x="Pathogen",
+                                  by.y="bacteria",
+                                  all.x=TRUE,
+                                  all.y=FALSE)
 
-#### remove TB and discuss in paper, as huge high IQR & having trouble with the log scaling
+### fill in by hand miss-matches
+UNITcost_averted_global2[Pathogen=="Haemophilus influenzae"
+                         |Pathogen=="Non-typhoidal Salmonella" 
+                         |Pathogen=="Salmonella Paratyphi"  
+                         |Pathogen=="Salmonella Typhi"
+                         |Pathogen=="Shigella spp.", gram.stain:="gn"]  
 
-ggplot(UNITcost_averted_global, aes(x=interaction(Exposure_Group), y=Median_unitcost, 
+UNITcost_averted_global2[gram.stain=="gn", gram.stain := "Gram-negative"]
+UNITcost_averted_global2[gram.stain=="gp", gram.stain := "Gram-positive"]
+
+## shorten some long exposure group names
+UNITcost_averted_global2[Exposure_Group=="Fluoroquinolones or MDR in Salmonella Salmonella Paratyphi" ,
+                         Exposure_Group:="Fluoroquinolones/MDR Salmonella Paratyphi" ]
+UNITcost_averted_global2[Exposure_Group=="Fluoroquinolones or MDR in Salmonella Salmonella Typhi" ,
+                         Exposure_Group:="Fluoroquinolones/MDR Salmonella Salmonella Typhi" ]
+UNITcost_averted_global2[Exposure_Group=="Fluoroquinolones or MDR in Salmonella Non-typhoidal Salmonella",
+                         Exposure_Group:= "Fluoroquinolones/MDR Non-typhoidal Salmonella" ]
+
+ggplot(UNITcost_averted_global2, aes(x=interaction(Exposure_Group), y=Median_unitcost, 
                                     fill=Infectious.syndrome)) + 
   geom_bar(position=position_dodge(), stat="identity",
            colour="black", # Use black outlines,
@@ -862,23 +924,8 @@ ggplot(UNITcost_averted_global, aes(x=interaction(Exposure_Group), y=Median_unit
                 position=position_dodge(.9)) +
   xlab("Resistance & Bacterial Exposure") +
   ylab("Hospital Cost per Case (2019 USD)") +
-  ggtitle("Global Averages") +
-  scale_fill_viridis_d()+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
-  coord_cartesian(ylim=c(NA, 30000), expand = FALSE)
-
-ggplot(UNITcost_averted_global, aes(x=interaction(Exposure_Group), y=Median_unitcost, 
-                                    fill=Infectious.syndrome)) + 
-  geom_bar(position=position_dodge(), stat="identity",
-           colour="black", # Use black outlines,
-           size=.3) +      # Thinner lines
-  geom_errorbar(aes(ymin=LOWIQR_unitcost, ymax=HIGIQR_unitcost),
-                size=.3,    # Thinner lines
-                width=.2,
-                position=position_dodge(.9)) +
-  xlab("Resistance & Bacterial Exposure") +
-  ylab("Hospital Cost per Case (2019 USD)") +
-  ggtitle("Global Averages") +
-  scale_fill_viridis_d()+
-  scale_y_continuous(trans="log10")+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  scale_fill_brewer(palette = "Paired")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        text = element_text(size = 15))+
+  coord_cartesian(ylim=c(NA, 10000), expand = FALSE)+
+  facet_wrap(~gram.stain, scales="free")
