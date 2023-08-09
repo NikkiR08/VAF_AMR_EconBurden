@@ -784,8 +784,8 @@ total.cost.plot <- function (all.dt){
       , position = "top"
     ) +
     labs(
-      title = "Total Hospital Costs caused by DRIs, by WHO region"
-      , subtitle = "Log scaled costs in 2019 USD. Circles are sized by productivity loss due to DRI deaths, and colour indicates WHO region.\n"
+      title = "Total Costs caused by DRIs, by WHO region"
+      , subtitle = "Log scaled costs in 2019 USD. The y-axis represents hospital costs. Circles are sized by productivity loss due to DRI deaths, and colour indicates WHO region.\n"
     ) +
     theme_minimal() +
     theme(
@@ -879,7 +879,7 @@ total.cost.plot(all.dt)
 #   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 ### multi panel by gram stain
-load("outputs/hospitalC_global_los.RData")
+load("outputs/hospitalC_global_los_npop.RData")
 
 ## remove TB !!!
 UNITcost_averted_global <- as.data.table(hospital_c) 
