@@ -65,10 +65,9 @@ load("outputs/hospitalC_global_averted.RData")
 
 hospital_c <- cleaning.dt(hospital_c)
 
-hospital_c[class=="Fluoroquinolones or MDR in Salmonella",Antibiotic.class :="any"]
+hospital_c[class=="Fluoroquinolones or MDR in Salmonella",class :="fluoroquinolones & mdr"]
 hospital_c[Infectious.syndrome=="BSI", Infectious.syndrome := "Bloodstream infections"]
 hospital_c[Infectious.syndrome=="UTI", Infectious.syndrome := "Urinary tract infections"]
-hospital_c[Antibiotic.class=="Methicillin", Antibiotic.class := "Penicillin"]
 hospital_c[Infectious.syndrome=="TB", Infectious.syndrome := "Tuberculosis"]
 
 hospital_c[, c("cost_med","other1") := tstrsplit(median_iqr_total_cost, "(", fixed=TRUE)]
@@ -93,23 +92,36 @@ hospital_c$Pathogen <- factor(hospital_c$Pathogen ,
                                    levels = 
                                      unique(hospital_c$Pathogen[order(hospital_c$cost_med)]))
 
-ggplot(hospital_c, aes(reorder(Pathogen,cost_med), cost_med,
+path <- hospital_c$Pathogen
+
+hospital_c$class <- factor(hospital_c$class, levels=unique(hospital_c$class))
+
+abxcolours <-
+  setNames( c("#660099", "#E69F00", "#56B4E9", "#009E73",
+              "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+            , levels(hospital_c$class)  )
+
+ggplot(hospital_c, aes(Pathogen, cost_med,
                             fill=class)) +
   geom_bar(stat="identity")+
-  theme(axis.text.x = element_text(angle = -90))+
+  scale_fill_manual(values = abxcolours)+
+  theme(axis.text.x = element_text(angle = -90),
+        text= element_text(size = 15))+
   scale_y_continuous(label= scales::comma)+
   xlab("Pathogen")+
   ylab("Total Hospital Costs (USD)")+
-  labs(fill="Antibiotic Class")
+  labs(fill="Antibiotic Class") 
 
-ggplot(hospital_c, aes(reorder(Pathogen,cost_med), cost_med,
+ggplot(hospital_c, aes(Pathogen, cost_med,
                             fill=Infectious.syndrome)) +
   geom_bar(stat="identity")+
-  theme(axis.text.x = element_text(angle = -90))+
+  theme(axis.text.x = element_text(angle = -90),
+        text= element_text(size = 15))+
   scale_y_continuous(label= scales::comma)+
   xlab("Pathogen")+
   ylab("Total Hospital Costs (USD)")+
   labs(fill="Syndrome")
+
 
 ############## getting a global median and IQR
 load("outputs/total_global_cost.RData")
@@ -167,19 +179,40 @@ global_prod_deaths <- prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
                                   .SDcols=c("HC_cost",
                                             "averted_HC")]
 
-ggplot(global_prod_deaths, aes(reorder(Pathogen,HC_cost), HC_cost,
-                               fill=Antibiotic.class)) +
+
+### get it so the productivity and hc costs are the same order of pathogens 
+### and the same colours for antibiotic classes
+
+abx_dic <- unique(global_prod_deaths[,c("Antibiotic.class")])
+abx_dic[Antibiotic.class=="Carbapenems", class:="carbapenems"]
+abx_dic[Antibiotic.class=="Fluoroquinolones", class:="fluoroquinolones"]
+abx_dic[Antibiotic.class=="Third-generation cephalosporins", class:="3g cephalosporins"]
+abx_dic[Antibiotic.class=="Macrolide", class:="macrolides"]
+abx_dic[Antibiotic.class=="MDR", class:="mdr"]
+abx_dic[Antibiotic.class=="Penicillin", class:="penicillins"]
+abx_dic[Antibiotic.class=="Vancomycin", class:="glycopeptides"]
+
+global_prod_deaths <- merge(global_prod_deaths,abx_dic,by="Antibiotic.class")
+
+global_prod_deaths$Pathogen <- factor(global_prod_deaths$Pathogen , 
+                              levels = levels(path))
+
+ggplot(global_prod_deaths, aes(Pathogen, HC_cost,
+                               fill=class)) +
   geom_bar(stat="identity")+
-  theme(axis.text.x = element_text(angle = -90))+
+  theme(axis.text.x = element_text(angle = -90),
+        text= element_text(size = 15))+
+  scale_fill_manual(values = abxcolours)+
   scale_y_continuous(label= scales::comma)+
   xlab("Pathogen")+
   ylab("Total Productivity Losses (USD)")+
   labs(fill='Antibiotic Class') 
 
-ggplot(global_prod_deaths, aes(reorder(Pathogen,HC_cost), HC_cost,
+ggplot(global_prod_deaths, aes(Pathogen, HC_cost,
                                fill=Infectious.syndrome)) +
   geom_bar(stat="identity")+
-  theme(axis.text.x = element_text(angle = -90))+
+  theme(axis.text.x = element_text(angle = -90),
+        text= element_text(size = 15))+
   scale_y_continuous(label= scales::comma)+
   xlab("Pathogen")+
   ylab("Total Productivity Losses (USD)")+
@@ -191,6 +224,8 @@ ggplot(global_prod_deaths, aes(reorder(Pathogen,HC_cost), HC_cost,
 load("outputs/hospitalC_region_averted.RData")
 
 regional_hospital_totals <- cleaning.dt(hospital_c)
+
+regional_hospital_totals[WHO.Region=="PAHO", WHO.Region := "AMRO"]
 
 getting_numbers_bk <- function(regional_hospital_totals){
 ### remove commas from numeric strings
@@ -243,6 +278,8 @@ regional_hospital_totals[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
 
 regional_hospital_totals <- getting_numbers_bk(regional_hospital_totals)
 
+regional_hospital_totals[WHO.Region=="PAHO", WHO.Region := "AMRO"]
+
 save(regional_hospital_totals, file="outputs/regional_hospital_4additionalplots.RData")
 
 total_averted <- regional_hospital_totals[, lapply(.SD, sum, na.rm=TRUE),
@@ -262,7 +299,8 @@ ggplot(regional_hospital_totals, aes(x = Pathogen, y = avert_cost_med,
                 position = position_dodge(0.9), width = .2)+
   xlab("Resistance Exposure") +
   ylab("Averted Hospital Costs (2019 USD)") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        text = element_text(size = 15))+
   scale_y_continuous(label= scales::comma)+
   labs(fill="WHO Region")
 
@@ -274,7 +312,8 @@ ggplot(regional_hospital_totals, aes(x = Pathogen, y = avert_days_med,
                 position = position_dodge(0.9), width = .2)+
   xlab("Pathogen") +
   ylab("Averted Hospital Bed Days") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        text = element_text(size = 15))+
   scale_y_continuous(label= scales::comma)+
   labs(fill="WHO Region")
 
@@ -349,6 +388,7 @@ ggplot(regional_prod_path  , aes(x = Pathogen, y = averted_HC,
 load("outputs/hospitalC_global_averted.RData")
 
 global_hospital_totals <- cleaning.dt(hospital_c)
+
 global_hospital_totals[class=="Fluoroquinolones or MDR in Salmonella",Antibiotic.class :="any"]
 global_hospital_totals[Infectious.syndrome=="BSI", Infectious.syndrome := "Bloodstream infections"]
 global_hospital_totals[Infectious.syndrome=="UTI", Infectious.syndrome := "Urinary tract infections"]
@@ -365,6 +405,7 @@ prod_deaths <- read.csv("outputs/productivity_loss_deaths_all.csv")
 prod_deaths <- as.data.table(prod_deaths)
 ### getting one vaccine/one DRI per group
 prod_deaths <- cleaning.dt(prod_deaths)
+
 prod_deaths[Infectious.syndrome=="BSI", Infectious.syndrome := "Bloodstream infections"]
 prod_deaths[Infectious.syndrome=="UTI", Infectious.syndrome := "Urinary tract infections"]
 prod_deaths[Infectious.syndrome=="TB", Infectious.syndrome := "Tuberculosis"]
@@ -426,7 +467,7 @@ sc2.prod[Antibiotic.class=="Multi-drug resistance in Salmonella Typhi and Paraty
                    "averted_HC")])*1/1e9
 
 load("outputs/prod_4additionalplots.RData")
-sc1.prod <- prod_deaths
+sc1.prod <- cleaning.dt(prod_deaths)
 ## rename columns pre-merge
 names(sc2.prod)[names(sc2.prod) == 'HC_cost'] <- 'sc2_total'
 names(sc2.prod)[names(sc2.prod) == 'averted_HC'] <- 'sc2_averted'
@@ -452,6 +493,7 @@ all.prod.methods <- merge(all.prod.methods,fc.prod, by.x=c(".id",
                                  "Antibiotic.class",
                                  "Infectious.syndrome"))
 
+save(all.prod.methods, file="outputs/prod_additional4plots_sc2.RData")
 
 all.prod.methods.long <- data.table::melt(all.prod.methods, id.vars = c(".id",
                                                                         "Pathogen" ,
@@ -561,13 +603,35 @@ pacman::p_load(
 )
 
 ########## loading data
-load("outputs/regional_hospital_4additionalplots.RData")
-load("outputs/prod_4additionalplots.RData")
+load("outputs/regional_hospital_4additionalplots.RData") ## adding sc2 for productivity
+load("outputs/prod_additional4plots_sc2.RData")
+# load("outputs/prod_4additionalplots.RData")## adding sc2 for productivity
+
+prod_deaths <- cleaning.dt(all.prod.methods)
+
+## function doesnt work for this hospital data as there is 
+regional_hospital_totals <-    regional_hospital_totals[regional_hospital_totals$vaccine_id %in% keep_vac]
+####!!! don't use for totals pre-vaccine as will have double counting for e.coli
+### trying to account for this
+### accounting for duplication of E. coli total amounts for ETEC & EXPEC
+regional_hospital_totals[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
+                         cost_med :=0]
+regional_hospital_totals[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
+                         cost_lo :=0]
+regional_hospital_totals[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
+                         cost_hi :=0]
+regional_hospital_totals[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
+                         days_med :=0]
+regional_hospital_totals[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
+                         days_lo :=0]
+regional_hospital_totals[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
+                         days_hi :=0]
 
 regional_prod_deaths <- prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
                                     by = c(".id","Pathogen","vaccine_id"),
-                                    .SDcols=c("HC_cost","averted_HC")]
-regional_prod_deaths[.id=="PAHO", .id:="AMRO"]
+                                    .SDcols=c("sc1_total","sc2_total",
+                                              "sc1_averted","sc2_averted")]
+
 ### merge together
 all.dt <- merge(regional_prod_deaths, regional_hospital_totals, by.x=c(".id","Pathogen","vaccine_id"),
                 by.y=c("WHO.Region","Pathogen","vaccine_id"))
@@ -578,8 +642,8 @@ all.dt <- merge(regional_prod_deaths, regional_hospital_totals, by.x=c(".id","Pa
 all.dt <- all.dt[, lapply(.SD, sum, na.rm=TRUE),
                  by = c("Pathogen",
                         ".id"),
-                 .SDcols=c(    "HC_cost"   ,           
-                               "averted_HC"   ,         
+                 .SDcols=c(    "sc1_total","sc2_total",
+                               "sc1_averted","sc2_averted" ,         
                                "avert_cost_med"  ,"avert_cost_lo",
                                "avert_cost_hi" ,
                                "cost_med",  "cost_lo" ,
@@ -594,7 +658,7 @@ all.dt.temp <- all.dt[,.(median_cost_sum_G=sum(cost_med)),
 all.dt <- merge(all.dt, all.dt.temp, by=c("Pathogen"),
                 allow.cartesian = TRUE)
 
-all.dt.temp <- all.dt[,.(median_prod_cost_sum_G=sum(HC_cost)),
+all.dt.temp <- all.dt[,.(median_prod_cost_sum_G=sum(sc1_total)),
                       by=c("Pathogen")]
 
 all.dt <- merge(all.dt, all.dt.temp, by=c("Pathogen"),
@@ -605,147 +669,148 @@ all.dt[ , global_total := median_prod_cost_sum_G+median_cost_sum_G]
 ##### Line plot for hospital costs
 options(scipen=10000) ## turn off scientific notation
 
-######## bed days averted ##################
-all.dt %>%
-  ggplot() +
-  geom_pointrange(
-    mapping = aes(
-      y = fct_reorder(Pathogen, median_cost_sum_G)
-      , x = avert_days_med
-      , xmin = avert_days_lo
-      , xmax = avert_days_hi
-      , colour = .id
-    )
-    , position = position_dodge(width = 0.5)
-    , size = 0.7
-    , lwd = 0.7
-  ) +
-  scale_colour_viridis(discrete = TRUE) +
-  scale_x_log10(
-    labels = comma
-    , position = "top"
-  ) +
-  labs(
-    title = "Median Hospital Days averted due to vaccinations, by WHO region"
-    , subtitle = "Capacity in Days. Line ranges represent the IQR.\n"
-  ) +
-  theme_minimal() +
-  theme(
-    panel.grid.minor.x = element_blank()
-    , panel.grid.major.y = element_blank()
-    , axis.line.y = element_line(
-      colour = "grey"
-      , linewidth = 1
-    )
-    , axis.text.y = element_text(
-      face = "bold.italic"
-      , family = "sans"
-      , size = 14
-      , colour = "black"
-    )
-    , axis.text.x.top = element_text(
-      family = "sans"
-      , size = 12
-      , margin = margin(
-        b = 10
-      )
-    )
-    , axis.title.y = element_blank()
-    , axis.title.x = element_blank()
-    , legend.position = c(0.14, 0.98)
-    , legend.title = element_blank()
-    , plot.title = element_text(
-      face = "bold"
-      , family = "sans"
-      , size = 20
-      , colour = "black"
-    )
-    , plot.subtitle = element_text(
-      face = "bold"
-      , family = "sans"
-      , size = 16
-      , colour = "grey50"
-    )
-  ) +
-  guides(
-    alpha = "none"
-    , colour = guide_legend(
-      override.aes = list(
-        size = 2
-      )
-      , nrow = 1)
-  )
-
-########### hospital cost averted ####################
-all.dt %>%
-  ggplot() +
-  geom_pointrange(
-    mapping = aes(
-      y = fct_reorder(Pathogen, median_cost_sum_G)
-      , x = avert_cost_med
-      , xmin = avert_cost_lo
-      , xmax = avert_cost_hi
-      , colour = .id
-    )
-    , position = position_dodge(width = 0.5)
-    , size = 0.7
-    , lwd = 0.7
-  ) +
-  scale_colour_viridis(discrete = TRUE) +
-  scale_x_log10(
-    labels = dollar
-    , position = "top"
-  ) +
-  labs(
-    title = "Median Hospital Costs averted due to vaccinations, by WHO region"
-    , subtitle = "Cost in 2019 USD. Line ranges represent the IQR.\n"
-  ) +
-  theme_minimal() +
-  theme(
-    panel.grid.minor.x = element_blank()
-    , panel.grid.major.y = element_blank()
-    , axis.line.y = element_line(
-      colour = "grey"
-      , linewidth = 1
-    )
-    , axis.text.y = element_text(
-      face = "bold.italic"
-      , family = "sans"
-      , size = 14
-      , colour = "black"
-    )
-    , axis.text.x.top = element_text(
-      family = "sans"
-      , size = 12
-      , margin = margin(
-        b = 10
-      )
-    )
-    , axis.title.y = element_blank()
-    , axis.title.x = element_blank()
-    , legend.position = c(0.20, 0.98)
-    , legend.title = element_blank()
-    , plot.title = element_text(
-      face = "bold"
-      , family = "sans"
-      , size = 18
-      , colour = "black"
-    )
-    , plot.subtitle = element_text(
-      face = "bold"
-      , family = "sans"
-      , size = 16
-      , colour = "grey50"
-    )
-  ) +
-  guides(
-    alpha = "none"
-    , colour = guide_legend(
-      override.aes = list(
-        size = 2
-      )
-      , nrow = 1)
-  )
+# ######## bed days averted ##################
+# all.dt %>%
+#   ggplot() +
+#   geom_pointrange(
+#     mapping = aes(
+#       y = fct_reorder(Pathogen, median_cost_sum_G)
+#       , x = avert_days_med
+#       , xmin = avert_days_lo
+#       , xmax = avert_days_hi
+#       , colour = .id
+#     )
+#     , position = position_dodge(width = 0.5)
+#     , size = 0.7
+#     , lwd = 0.7
+#   ) +
+#   scale_colour_brewer(palette = "Dark2") +
+#   scale_x_log10(
+#     labels = comma
+#     , position = "top"
+#   ) +
+#   labs(
+#     title = "Median Hospital Days averted due to vaccinations, by WHO region"
+#     , subtitle = "Capacity in Days. Line ranges represent the IQR.\n"
+#   ) +
+#   theme_minimal() +
+#   theme(
+#     panel.grid.minor.x = element_blank()
+#     , panel.grid.major.y = element_blank()
+#     , axis.line.y = element_line(
+#       colour = "black"
+#       , linewidth = 1
+#     )
+#     , axis.text.y = element_text(
+#       face = "bold.italic"
+#       , family = "sans"
+#       , size = 14
+#       , colour = "black"
+#     )
+#     , axis.text.x.top = element_text(
+#       family = "sans"
+#       , size = 12
+#       , margin = margin(
+#         b = 10
+#       )
+#     )
+#     , axis.title.y = element_blank()
+#     , axis.title.x = element_blank()
+#     , legend.position = c(0.20, 0.98)
+#     , legend.title = element_blank()
+#     , plot.title = element_text(
+#       face = "bold"
+#       , family = "sans"
+#       , size = 20
+#       , colour = "black"
+#     )
+#     , plot.subtitle = element_text(
+#       face = "bold"
+#       , family = "sans"
+#       , size = 16
+#       , colour = "grey50"
+#     )
+#   ) +
+#   guides(
+#     alpha = "none"
+#     , colour = guide_legend(
+#       override.aes = list(
+#         size = 2
+#       )
+#       , nrow = 1))+
+#   theme(panel.grid.major.y =element_line(colour="black")
+#   )
+# 
+# ########### hospital cost averted ####################
+# all.dt %>%
+#   ggplot() +
+#   geom_pointrange(
+#     mapping = aes(
+#       y = fct_reorder(Pathogen, median_cost_sum_G)
+#       , x = avert_cost_med
+#       , xmin = avert_cost_lo
+#       , xmax = avert_cost_hi
+#       , colour = .id
+#     )
+#     , position = position_dodge(width = 0.5)
+#     , size = 0.7
+#     , lwd = 0.7
+#   ) +
+#   scale_colour_viridis(discrete = TRUE) +
+#   scale_x_log10(
+#     labels = dollar
+#     , position = "top"
+#   ) +
+#   labs(
+#     title = "Median Hospital Costs averted due to vaccinations, by WHO region"
+#     , subtitle = "Cost in 2019 USD. Line ranges represent the IQR.\n"
+#   ) +
+#   theme_minimal() +
+#   theme(
+#     panel.grid.minor.x = element_blank()
+#     , panel.grid.major.y = element_blank()
+#     , axis.line.y = element_line(
+#       colour = "grey"
+#       , linewidth = 1
+#     )
+#     , axis.text.y = element_text(
+#       face = "bold.italic"
+#       , family = "sans"
+#       , size = 14
+#       , colour = "black"
+#     )
+#     , axis.text.x.top = element_text(
+#       family = "sans"
+#       , size = 12
+#       , margin = margin(
+#         b = 10
+#       )
+#     )
+#     , axis.title.y = element_blank()
+#     , axis.title.x = element_blank()
+#     , legend.position = c(0.20, 0.98)
+#     , legend.title = element_blank()
+#     , plot.title = element_text(
+#       face = "bold"
+#       , family = "sans"
+#       , size = 18
+#       , colour = "black"
+#     )
+#     , plot.subtitle = element_text(
+#       face = "bold"
+#       , family = "sans"
+#       , size = 16
+#       , colour = "grey50"
+#     )
+#   ) +
+#   guides(
+#     alpha = "none"
+#     , colour = guide_legend(
+#       override.aes = list(
+#         size = 2
+#       )
+#       , nrow = 1)
+#   )
 
 ########### total costs ####################
 
@@ -754,15 +819,13 @@ total.cost.plot <- function (all.dt){
     ggplot(
       mapping = aes(
         x = cost_med
-        , size = HC_cost
+        , size = sc1_total
         , y = fct_reorder(Pathogen,global_total)
         , colour = .id
         , alpha = .8
       )
     ) +
-    scale_colour_viridis(
-      discrete = TRUE
-    ) +
+    scale_color_brewer(palette = "Dark2") +
     scale_y_discrete(
       expand = c(
         0
@@ -780,35 +843,35 @@ total.cost.plot <- function (all.dt){
       )
     ) +
     scale_x_log10(
-      labels = dollar
+      labels = scales::dollar_format(scale = 1e-6, suffix = "mn")
       , position = "top"
     ) +
-    labs(
-      title = "Total Costs caused by DRIs, by WHO region"
-      , subtitle = "Log scaled costs in 2019 USD. The y-axis represents hospital costs. Circles are sized by productivity loss due to DRI deaths, and colour indicates WHO region.\n"
-    ) +
+    # labs(
+    #   title = "Total Costs caused by DRIs, by WHO region"
+    #   , subtitle = "Log scaled costs in 2019 USD. The y-axis represents hospital costs. Circles are sized by productivity loss due to DRI deaths, and colour indicates WHO region.\n"
+    # ) +
     theme_minimal() +
     theme(
       axis.line.y = element_line(
-        colour = "grey"
+        colour = "black"
         , linewidth = 1
       )
       , axis.text.y = element_text(
         face = "bold.italic"
         , family = "sans"
-        , size = 14
+        , size = 12
         , colour = "black"
       )
       , axis.text.x.top = element_text(
         family = "sans"
-        , size = 12
+        , size = 10.5
         , margin = margin(
-          b = 10
+          b = 5
         )
       )
       , axis.title.y = element_blank()
       , axis.title.x = element_blank()
-      , legend.position = c(0.165, 0.98)
+      , legend.position = c(0.20, 0.98)
       , legend.title = element_blank()
       , plot.title = element_text(
         face = "bold"
@@ -830,8 +893,8 @@ total.cost.plot <- function (all.dt){
         override.aes = list(
           size = 8
         )
-        , nrow = 1)
-    )
+        , nrow = 1) )+
+  theme(panel.grid.major.y =element_line(colour="black"))
 }
 
 
@@ -841,9 +904,6 @@ total.cost.plot(all.dt)
 #### unit cost plotting code #####
 
 #### running using global unit cost from combining_cost_cases_NEW
-
-
-
 
 # ggplot(UNITcost_averted_global, aes(x=interaction(Exposure_Group), y=Median_unitcost, 
 #                                     fill=Infectious.syndrome)) + 
@@ -880,6 +940,7 @@ total.cost.plot(all.dt)
 
 ### multi panel by gram stain
 load("outputs/hospitalC_global_los_npop.RData")
+### doesn't matter about vaccine scenarios for this
 
 ## remove TB !!!
 UNITcost_averted_global <- as.data.table(hospital_c) 
@@ -929,3 +990,166 @@ ggplot(UNITcost_averted_global2, aes(x=interaction(Exposure_Group), y=Median_uni
         text = element_text(size = 15))+
   coord_cartesian(ylim=c(NA, 10000), expand = FALSE)+
   facet_wrap(~gram.stain, scales="free")
+
+
+
+
+######## productivity cost averted ##################
+
+### create min and max values
+all.dt[sc1_averted<sc2_averted, min_prod := sc1_averted]
+all.dt[sc2_averted<sc1_averted, min_prod := sc2_averted]
+all.dt[sc1_averted<sc2_averted, max_prod := sc2_averted]
+all.dt[sc2_averted<sc1_averted, max_prod := sc1_averted]
+
+all.dt %>%
+  ggplot() +
+  geom_pointrange(
+    mapping = aes(
+      y = fct_reorder(Pathogen, median_cost_sum_G)
+      , x = sc1_averted
+      , xmin= min_prod
+      , xmax= max_prod
+      , colour = .id
+    )
+    , position = position_dodge(width = 0.5)
+    , size = 0.7
+    , lwd = 0.7
+  ) +
+  scale_colour_brewer(palette = "Dark2") +
+  scale_x_log10(
+    labels = scales::dollar_format(scale = 1e-6, suffix = "mn")
+    , position = "top"
+  ) +
+  # labs(
+  #   title = "Productivity Losses Averted"
+  #   , subtitle = "Point estimates are base case scenario. The line represents min and max values across scenarios \n"
+  # ) +
+  theme_minimal() +
+  theme(
+    panel.grid.minor.x = element_blank()
+    , panel.grid.major.y = element_blank()
+    , axis.line.y = element_line(
+      colour = "black"
+      , linewidth = 1
+    )
+    , axis.text.y = element_text(
+      face = "bold.italic"
+      , family = "sans"
+      , size = 14
+      , colour = "black"
+    )
+    , axis.text.x.top = element_text(
+      family = "sans"
+      , size = 12
+      , margin = margin(
+        b = 10
+      )
+    )
+    , axis.title.y = element_blank()
+    , axis.title.x = element_blank()
+    , legend.position = c(0.20, 0.98)
+    , legend.title = element_blank()
+    , plot.title = element_text(
+      face = "bold"
+      , family = "sans"
+      , size = 20
+      , colour = "black"
+    )
+    , plot.subtitle = element_text(
+      face = "bold"
+      , family = "sans"
+      , size = 16
+      , colour = "grey50"
+    )
+  ) +
+  guides(
+    alpha = "none"
+    , colour = guide_legend(
+      override.aes = list(
+        size = 2
+      )
+      , nrow = 1))+
+  theme(panel.grid.major.y =element_line(colour="black"),
+        plot.margin=margin(10,50,10,10)
+  )
+
+##### WLYL####
+load("outputs/working_life_years_lost.Rdata")
+
+output_hc <- as.data.table(output_hc)
+### getting one vaccine/one DRI per group
+output_hc <- cleaning.dt(output_hc)
+
+regional_prod_path  <-output_hc[, lapply(.SD, sum, na.rm=TRUE),
+                                  by = c("Pathogen",
+                                         ".id"),
+                                  .SDcols=c("averted_HC")]
+regional_prod_path[.id=="PAHO",.id := "AMRO"]
+
+all.dt2 <- merge(regional_prod_path,all.dt, by=c("Pathogen",".id"))
+
+all.dt2 %>%
+  ggplot() +
+  geom_point(
+    mapping = aes(
+      y = fct_reorder(Pathogen, median_cost_sum_G)
+      , x = averted_HC
+      , colour = .id
+    )
+    , position = position_dodge(width = 0.5)
+    , size = 7
+    , lwd = 0.7
+  ) +
+  scale_colour_brewer(palette = "Dark2") +
+  scale_x_log10(
+    labels = unit_format(unit = "mn", scale = 1e-6)
+    , position = "top"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.minor.x = element_blank()
+    , panel.grid.major.y = element_blank()
+    , axis.line.y = element_line(
+      colour = "black"
+    )
+    , axis.text.y = element_text(
+      face = "bold.italic"
+      , family = "sans"
+      , size = 14
+      , colour = "black"
+    )
+    , axis.text.x.top = element_text(
+      family = "sans"
+      , size = 12
+      , margin = margin(
+        b = 10
+      )
+    )
+    , axis.title.y = element_blank()
+    , axis.title.x = element_blank()
+    , legend.position = c(0.20, 0.98)
+    , legend.title = element_blank()
+    , plot.title = element_text(
+      face = "bold"
+      , family = "sans"
+      , size = 20
+      , colour = "black"
+    )
+    , plot.subtitle = element_text(
+      face = "bold"
+      , family = "sans"
+      , size = 16
+      , colour = "grey50"
+    )
+  ) +
+  guides(
+    alpha = "none"
+    , colour = guide_legend(
+      override.aes = list(
+        size = 7
+      )
+      , nrow = 1))+
+  theme(panel.grid.major.y =element_line(colour="black"),
+        plot.margin=margin(10,50,10,10)
+  )
