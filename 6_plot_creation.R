@@ -20,7 +20,7 @@ unique(hospital_c$vaccine_id)
 
 
 keep_vac <- c(               
- "Haemophilus influenzae type B_0.93_0.9_5 years_All_6, 10, 14 weeks"                                                           
+ "Haemophilus influenzae type B_both_0.9_5 years_All_6, 10, 14 weeks"                                                           
 ,"Salmonella Typhi_0.85_0.7_15 years_All_9 months"                                                                              
 , "Staphylococcus aureus_0.6_0.7_5 years_All_All age groups"                                                               
 , "E. coli - non-diarrhogenic_0.7_0.7_5 years_All except Diarrhoea_All age groups"                                      
@@ -31,10 +31,28 @@ keep_vac <- c(
 , "Pseudomonas aeruginosa_0.7_0.7_5 years_BSI, LRI and thorax infections_All age groups"                                         
 ,"Enterococcus faecium_0.7_0.7_5 years_All_All age groups"                                                                      
 , "Salmonella paratyphi_0.7_0.7_5 years_All_9 months"                                                                            
-, "Acinetobacter baumannii - all_0.7_0.7_5 years_All_All age groups"                                                             
-, "Streptococcus pneumoniae_0.27_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6, 10, 14 weeks"                       
+, "Acinetobacter baumannii - all_0.7_0.7_5 years_All_All age groups"                                                            
 , "Mycobacterium tuberculosis - Improved_0.8_0.7_10 years_All_0 weeks + boost every 10 years"                                    
 , "Shigella_0.6_0.7_5 years_All_6 months"  ) 
+### need to specify different ones for productivity as didn't group
+## vaccine scenarios like had done for 
+keep_vac_prod <- c(               
+  "Haemophilus influenzae type B_0.93_0.9_5 years_All_6, 10, 14 weeks"  
+  ,"Haemophilus influenzae type B_0.69_0.9_5 years_All_6, 10, 14 weeks" 
+  ,"Streptococcus pneumoniae - Improved_0.7_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6 weeks & elderly age group"
+  ,"Streptococcus pneumoniae - Improved_0.5_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6 weeks & elderly age group"
+  ,"Salmonella Typhi_0.85_0.7_15 years_All_9 months"                                                                              
+  , "Staphylococcus aureus_0.6_0.7_5 years_All_All age groups"                                                               
+  , "E. coli - non-diarrhogenic_0.7_0.7_5 years_All except Diarrhoea_All age groups"                                      
+  , "ETEC_0.6_0.7_5 years_Diarrhoea_6 months"                                                                   
+  , "Group A streptococcus_0.7_0.7_5 years_All_6 weeks"                                                                            
+  , "Klebsiella pneumoniae - all_0.7_0.7_5 years_All_All age groups"                                                      
+  , "Pseudomonas aeruginosa_0.7_0.7_5 years_BSI, LRI and thorax infections_All age groups"                                         
+  ,"Enterococcus faecium_0.7_0.7_5 years_All_All age groups"                                                                      
+  , "Salmonella paratyphi_0.7_0.7_5 years_All_9 months"                                                                            
+  , "Acinetobacter baumannii - all_0.7_0.7_5 years_All_All age groups"                                                            
+  , "Mycobacterium tuberculosis - Improved_0.8_0.7_10 years_All_0 weeks + boost every 10 years"                                    
+  , "Shigella_0.6_0.7_5 years_All_6 months"  ) 
 
 ######### !!! need to add back in the removal of double counting ETEC UTI etc.
 ##### 
@@ -58,12 +76,35 @@ cleaning.dt <- function(hospital_c){
   return(global_hospital)
 }
 
+cleaning.dt.prod <- function(hospital_c){
+  global_hospital <- hospital_c[hospital_c$vaccine_id %in% keep_vac_prod]
+  
+  ### need to specify for E.coli target syndromes so no double counting
+  global_hospital[ , flag := 0]
+  global_hospital[(vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months" & 
+                     Infectious.syndrome!="Diarrhoea")|(
+                       vaccine_id=="E. coli - non-diarrhogenic_0.7_0.7_5 years_All except Diarrhoea_All age groups"& 
+                         Infectious.syndrome=="Diarrhoea"),
+                  flag := 1]
+  global_hospital <-  global_hospital[flag==0]
+  global_hospital <-  global_hospital[ ,-c("flag")]
+  
+  
+  return(global_hospital)
+}
+
 ###### ******global totals ********#####################################
 
 #### HOSPITAL COSTS ##########################
 load("outputs/hospitalC_global_averted.RData")
 
 hospital_c <- cleaning.dt(hospital_c)
+
+### getting vaccine ids 
+vacs <- data.table(vacsid = unique(hospital_c$vaccine_id))
+vacs[, c("vaccine_target_disease","efficacy" ,"coverage"  ,
+         "duration", "target disease","target population") := tstrsplit(vacsid, "_", fixed=TRUE)]
+write.csv(vacs,file="outputs/vaccine_ids.csv")
 
 hospital_c[class=="Fluoroquinolones or MDR in Salmonella",class :="fluoroquinolones & mdr"]
 hospital_c[Infectious.syndrome=="BSI", Infectious.syndrome := "Bloodstream infections"]
@@ -157,7 +198,7 @@ print(global_hospital_totals)
 prod_deaths <- read.csv("outputs/productivity_loss_deaths_all.csv")
 prod_deaths <- as.data.table(prod_deaths)
 ### getting one vaccine/one DRI per group
-prod_deaths <- cleaning.dt(prod_deaths)
+prod_deaths <- cleaning.dt.prod(prod_deaths)
 
 prod_deaths[Infectious.syndrome=="BSI", Infectious.syndrome := "Bloodstream infections"]
 prod_deaths[Infectious.syndrome=="UTI", Infectious.syndrome := "Urinary tract infections"]
@@ -324,7 +365,7 @@ prod_deaths <- read.csv("outputs/productivity_loss_deaths_all.csv")
 prod_deaths <- as.data.table(prod_deaths)
 ### getting one vaccine/one DRI per group
 
-prod_deaths <- cleaning.dt(prod_deaths)
+prod_deaths <- cleaning.dt.prod(prod_deaths)
 
 prod_deaths[Infectious.syndrome=="BSI", Infectious.syndrome := "Bloodstream infections"]
 prod_deaths[Infectious.syndrome=="UTI", Infectious.syndrome := "Urinary tract infections"]
@@ -404,7 +445,7 @@ vaccine_hospital <- global_hospital_totals[, lapply(.SD, sum, na.rm=TRUE),
 prod_deaths <- read.csv("outputs/productivity_loss_deaths_all.csv")
 prod_deaths <- as.data.table(prod_deaths)
 ### getting one vaccine/one DRI per group
-prod_deaths <- cleaning.dt(prod_deaths)
+prod_deaths <- cleaning.dt.prod(prod_deaths)
 
 prod_deaths[Infectious.syndrome=="BSI", Infectious.syndrome := "Bloodstream infections"]
 prod_deaths[Infectious.syndrome=="UTI", Infectious.syndrome := "Urinary tract infections"]
@@ -431,7 +472,7 @@ fc.prod <- read.csv("outputs/vaccine_avertable_FC.csv")
 
 fc.prod <- as.data.table(fc.prod)
 ### getting one vaccine/one DRI per group
-fc.prod <- cleaning.dt(fc.prod)
+fc.prod <- cleaning.dt.prod(fc.prod)
 
 fc.prod[Infectious.syndrome=="BSI", Infectious.syndrome := "Bloodstream infections"]
 fc.prod[Infectious.syndrome=="UTI", Infectious.syndrome := "Urinary tract infections"]
@@ -450,7 +491,7 @@ fc.prod[Antibiotic.class=="Multi-drug resistance in Salmonella Typhi and Paratyp
 sc2.prod <- read.csv("outputs/productivity_loss_deaths_all_sc2.csv")
 
 sc2.prod <- as.data.table(sc2.prod)
-sc2.prod <- cleaning.dt(sc2.prod)
+sc2.prod <- cleaning.dt.prod(sc2.prod)
 
 
 sc2.prod[Infectious.syndrome=="BSI", Infectious.syndrome := "Bloodstream infections"]
@@ -467,7 +508,7 @@ sc2.prod[Antibiotic.class=="Multi-drug resistance in Salmonella Typhi and Paraty
                    "averted_HC")])*1/1e9
 
 load("outputs/prod_4additionalplots.RData")
-sc1.prod <- cleaning.dt(prod_deaths)
+sc1.prod <- cleaning.dt.prod(prod_deaths)
 ## rename columns pre-merge
 names(sc2.prod)[names(sc2.prod) == 'HC_cost'] <- 'sc2_total'
 names(sc2.prod)[names(sc2.prod) == 'averted_HC'] <- 'sc2_averted'
@@ -607,7 +648,7 @@ load("outputs/regional_hospital_4additionalplots.RData") ## adding sc2 for produ
 load("outputs/prod_additional4plots_sc2.RData")
 # load("outputs/prod_4additionalplots.RData")## adding sc2 for productivity
 
-prod_deaths <- cleaning.dt(all.prod.methods)
+prod_deaths <- cleaning.dt.prod(all.prod.methods)
 
 ## function doesnt work for this hospital data as there is 
 regional_hospital_totals <-    regional_hospital_totals[regional_hospital_totals$vaccine_id %in% keep_vac]
