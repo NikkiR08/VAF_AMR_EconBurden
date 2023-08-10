@@ -942,3 +942,20 @@ hospital_c <- hospital_c[vaccine_id!="_NA_NA___"]
 
 save(hospital_c,file="outputs/total_global_cost.RData")
 
+#### total class numbers #####
+load("outputs/hospitalC_global_averted_class.RData")
+
+class.cost <- hospital_c[,c("class","median_iqr_total_cost")]
+class.cost <- distinct(class.cost)
+
+## extract median values
+### remove commas from numeric strings
+class.cost[ , median_iqr_total_cost := gsub(",", "", gsub("([a-zA-Z]),", "\\1 ", median_iqr_total_cost)) ]
+
+### separate out numbers in/across brackets
+Separate <- function(...) separate(..., sep = "[^[:alnum:].]+", convert = TRUE)
+class.cost <- class.cost %>%
+  Separate(median_iqr_total_cost, into = c("cost_med", "cost_lo", "cost_hi", NA)) %>%
+  group_by(class) %>%
+  summarise(total = sum(cost_med))
+
