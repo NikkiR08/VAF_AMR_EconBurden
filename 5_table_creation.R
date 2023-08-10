@@ -144,7 +144,7 @@ Hib <- rbind(vaccine_output_dt,Hib_93)
 rm(Hib_93)
 unique(Hib$vaccine_id)
 Hib <- Hib[!is.na(vaccine_id)] ## remove those not associated with any vaccine scenarios
-Hib[ , vaccine_id := "Haemophilus influenzae type B_0.93_0.9_5 years_All_6, 10, 14 weeks"]
+Hib[ , vaccine_id := "Haemophilus influenzae type B_both_0.9_5 years_All_6, 10, 14 weeks"]
 hospital_cost_l_adj[[5]] <- mediqr1(Hib)
 
 
