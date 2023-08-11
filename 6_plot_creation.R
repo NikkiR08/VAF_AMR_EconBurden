@@ -193,6 +193,8 @@ global_hospital_totals <- global_hospital_totals/1e9
 
 print(global_hospital_totals)
 
+write.csv(global_hospital_totals, file="outputs/global_hospital_totals.csv")
+
 #### Global productivity ##########################
 
 prod_deaths <- read.csv("outputs/productivity_loss_deaths_all.csv")
@@ -377,6 +379,7 @@ prod_deaths[Antibiotic.class=="Multi-drug resistance in Salmonella Typhi and Par
             Antibiotic.class := "MDR"]
 
 save(prod_deaths, file="outputs/prod_4additionalplots.RData")
+
 
 ### total productivity loss by syndrome
 syndromerank <- prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
@@ -1194,3 +1197,62 @@ all.dt2 %>%
   theme(panel.grid.major.y =element_line(colour="black"),
         plot.margin=margin(10,50,10,10)
   )
+
+##### output table for total impacts pre and post vaccine ####
+
+load("outputs/hospitalC_global_averted_pathogen.RData")
+
+hospital_c <-    hospital_c[hospital_c$vaccine_id %in% keep_vac]
+####!!! don't use for totals pre-vaccine as will have double counting for e.coli
+### trying to account for this
+### accounting for duplication of E. coli total amounts for ETEC & EXPEC
+hospital_c[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
+                         cost_med :=0]
+hospital_c[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
+                         cost_lo :=0]
+hospital_c[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
+                         cost_hi :=0]
+hospital_c[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
+                         days_med :=0]
+hospital_c[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
+                         days_lo :=0]
+hospital_c[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
+                         days_hi :=0]
+
+
+#### Global productivity 
+
+load("outputs/prod_additional4plots_sc2.RData")
+
+### change vaccine ids for those we want to combine
+all.prod.methods[vaccine_id=="Haemophilus influenzae type B_0.93_0.9_5 years_All_6, 10, 14 weeks"|
+                   vaccine_id=="Haemophilus influenzae type B_0.69_0.9_5 years_All_6, 10, 14 weeks" ,
+                 vaccine_id := "Haemophilus influenzae type B_both_0.9_5 years_All_6, 10, 14 weeks" ]
+
+all.prod.methods[vaccine_id=="Streptococcus pneumoniae - Improved_0.7_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6 weeks & elderly age group"|
+                   vaccine_id=="Streptococcus pneumoniae - Improved_0.5_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6 weeks & elderly age group",
+                 vaccine_id := "Streptococcus pneumoniae - Improved_both_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6 weeks & elderly age group"]
+
+global_prod_deaths <- all.prod.methods[, lapply(.SD, sum, na.rm=TRUE),
+                                  by = c("Pathogen","vaccine_id"),
+                                  .SDcols=c("sc1_averted",
+                                            "sc1_total" ,
+                                            "sc2_averted" ,
+                                            "sc2_total" )]
+
+all_results_vac <- merge(global_prod_deaths, hospital_c,
+                         by="vaccine_id")
+
+write.csv(all_results_vac, file="outputs/all_results_vac.csv")
+
+### regional pathogen ranking
+pathrank <- all.prod.methods[, lapply(.SD, sum, na.rm=TRUE),
+                         by=c("vaccine_id",".id"),
+                         .SDcols=c("sc1_total")]
+pathrank <- split(pathrank,by=".id")
+af <- pathrank$AFRO
+am <- pathrank$AMRO
+em <- pathrank$EMRO
+eu <- pathrank$EURO
+sea <- pathrank$SEARO
+wp <- pathrank$WPRO
