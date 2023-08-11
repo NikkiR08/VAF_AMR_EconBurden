@@ -431,7 +431,20 @@ DRI.temp <- AMR.noS.p[ ,c("group_id_c"  ,"run" ,
 DRI.temp[ , run := run+1000]
 DRI.all <- rbind(DRI.all, DRI.temp)
 
+### still have duplicates for those who are in multiple ways of calculating  DRI for that exposure group
+x<- DRI.all[ , -c("los.DRI")]
+x <- x[,list(Count=.N),names(x)]
+unique(x$Count)
+### there were more than 1s this time
+y <- x[Count>1]
 
+## create a new run id for each group id so as to not double count runs as cases/costs
+DRI.all <- DRI.all[, run := sequence(.N), by = c("group_id_c")]
+# x<- DRI.all[ , -c("los.DRI")]
+# x <- x[,list(Count=.N),names(x)]
+# unique(x$Count)
+# ### there were more than 1s this time
+# y <- x[Count>1]
 save(DRI.all, file="outputs/DRI_UC_los_trunc.RData")
 
 
