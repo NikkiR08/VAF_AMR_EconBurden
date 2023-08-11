@@ -13,6 +13,10 @@ library(ggplot2)
 myfiles = list.files(path="C:/Users/nicho/OneDrive/Documents/VAF_AMR_EconBurden/outputs/fulloutput_chunks/",
                      pattern="*.RData", full.names = TRUE)
 
+### !!! in future iterations would be good to explore why NA scenarios come up
+### where there are unit costs sampled + no cases - remove earlier on so don't have to
+### keep removing in table/plot creation
+
 ### split into the ones that need adjusting and those that don't
 ### compared to WHO tables - don't need to do pseudo or strep syndrome specifications
 ### as using all modelled syndromes
@@ -40,6 +44,7 @@ nonadj <- setdiff(myfiles,adj) ## find ones that don't need adjusting
 #### MEDIAN & IQR INSTEAD #################
 
 mediqr1 <- function(vaccine_output_dt){
+  vaccine_output_dt[WHO.Region=="PAHO",WHO.Region := "AMRO"]
   x <- vaccine_output_dt%>% group_by(WHO.Region, Pathogen, Infectious.syndrome,
                                                 vaccine_id, run) %>%
     summarise(who_region_cost_A = sum(avertable_cost_cases, na.rm=TRUE),
@@ -152,6 +157,9 @@ hospital_c <- rbindlist(hospital_cost_l)
 hospital_cA <- rbindlist(hospital_cost_l_adj)
 hospital_c <- rbind(hospital_c,hospital_cA)
 
+###!!! not including those to mapped to any vaccine ID
+hospital_c <- hospital_c[vaccine_id!="_NA_NA___"]
+
 hospital_c <- dcast(hospital_c, Pathogen + Infectious.syndrome +
                       vaccine_id ~ WHO.Region, value.var = c( "median_iqr_total_cost" 
                                                               ,"median_iqr_averted_cost"
@@ -161,8 +169,6 @@ hospital_c <- dcast(hospital_c, Pathogen + Infectious.syndrome +
 hospital_c[, c("vaccine_target_disease","efficacy" ,"coverage"  ,
                "duration", "target disease","target population") := tstrsplit(vaccine_id, "_", fixed=TRUE)]
 
-###!!! not including those to mapped to any vaccine ID
-hospital_c <- hospital_c[vaccine_id!="_NA_NA___"]
 
 
 write.csv(hospital_c, file="outputs/END_hospital_costs_output_median.csv")
