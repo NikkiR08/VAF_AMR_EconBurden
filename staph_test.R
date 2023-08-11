@@ -1173,4 +1173,5 @@ cases_averted_all <- cases_averted
                  los.DRI = median(los.DRI, na.rm=TRUE),
                  days_cases = median(days_cases, na.rm=TRUE))
     
+    save(result, file="outputs/temp_staphtest.RData")
     
