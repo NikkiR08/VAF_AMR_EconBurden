@@ -1186,3 +1186,15 @@ cases_averted_all <- cases_averted
     
     x <- result2[,list(Count=.N),names(result2)]
     unique(x$Count)
+    
+    ###### checking original sample for other duplicates of runs
+    load("outputs/DRI_UC_los_trunc.RData") ## cost sample
+    
+    x<- DRI.all[ , -c("los.DRI")]
+    x <- x[,list(Count=.N),names(x)]
+    unique(x$Count)
+    ### there were more than 1s this time
+    y <- x[Count>1]
+    
+    ## AFG_EMRO D_BSI_3g cephalosporins_gn 
+    ## USA_AMRO A_COL/INF_carbapenems_gn
