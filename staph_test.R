@@ -1175,3 +1175,14 @@ cases_averted_all <- cases_averted
     
     save(result, file="outputs/temp_staphtest.RData")
     
+    ### now the proportions are the same i.e. cases hospitalised in our output file = original cases * proportion
+    
+    result2 <- result[ ,c("iso3c","WHO.Region"       ,          "Pathogen"            ,       "class"    ,                 
+                   "Infectious.syndrome"    ,    "vaccine_id"   ,  "run"  )  ]
+
+    
+    skin <-  result2[Infectious.syndrome=="Bacterial skin infections" &
+                             iso3c=="AFG" ]
+    
+    x <- result2[,list(Count=.N),names(result2)]
+    unique(x$Count)
