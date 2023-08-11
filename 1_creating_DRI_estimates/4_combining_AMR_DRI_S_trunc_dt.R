@@ -275,9 +275,20 @@ sample.AMR.other <- rbindlist(los.cc.AMR.extra, idcol=TRUE)
 
 setnames(sample.AMR.other,".id","run")
 sample.AMR.other[ , TE.final.rep := TE.final] # makes it easier to check
-sample.AMR.other[ , TE.final.rep := rtrunc(n = 1, spec = "gamma", shape = TE.final, 
-                                           scale = seTE.final, 
-                                           a = lowerlimsamp, b=upperlimsamp.amrs)]
+# sample.AMR.other[ , TE.final.rep := rtrunc(n = 1, spec = "gamma", shape = TE.final, 
+#                                            scale = seTE.final, 
+#                                            a = lowerlimsamp, b=upperlimsamp.amrs)]
+### for some reason data table version not working any more so using loop
+
+for (i in 1:length(sample.AMR.other)){
+  shape <- sample.AMR.other[i,TE.final]
+  scale <- sample.AMR.other[i,seTE.final]
+  x <- rtrunc(n = 1, spec = "gamma", shape = shape, 
+              scale = scale, 
+              a = lowerlimsamp, b=upperlimsamp.amrs)
+  sample.AMR.other[ i, TE.final.rep := x]
+}
+
 
 sample.AMR.other[ , TE.final := TE.final.rep] 
 sample.AMR.other <- sample.AMR.other[ , -c("seTE.final","TE.final.rep")]
@@ -318,12 +329,13 @@ los.cc.thin.S <- los.cc.S[ , c("iso3c.x","whoc.region", "syndrome","class","gram
 list.los.cc.S <- rep(list(los.cc.thin.S),n.samples)
 sample.S <- rbindlist(list.los.cc.S, idcol=TRUE)
 
-setnames(sample.DRI,".id","run")
+setnames(sample.S,".id","run") 
+
 sample.S[ , TE.final.rep := TE.final] # makes it easier to check
 sample.S[ , TE.final.rep := rtruncnorm(1, a=lowerlimsamp, b=upperlimsamp.amrs, 
                                          mean=TE.final, sd=seTE.final)]
 sample.S[ , TE.final := TE.final.rep] 
-sample.S <- sample.DRI[ , -c("seTE.final","TE.final.rep")]
+sample.S <- sample.S[ , -c("seTE.final","TE.final.rep")]
 
 save(sample.S, file="outputs/sample_S_trunc.RData")
 
@@ -414,9 +426,11 @@ AMR.noS.p[ , los.DRI := (los.AMR*prop)]
 DRI.temp <- AMR.noS.p[ ,c("group_id_c"  ,"run" ,
                           "los.DRI")]
 
-DRI.all <- rbind(DRI.all, DRI.temp)
 
 ### !!! note this means we have to update the run numbers as now have 2 run = 1 for each exposure group
+DRI.temp[ , run := run+1000]
+DRI.all <- rbind(DRI.all, DRI.temp)
+
 
 save(DRI.all, file="outputs/DRI_UC_los_trunc.RData")
 
