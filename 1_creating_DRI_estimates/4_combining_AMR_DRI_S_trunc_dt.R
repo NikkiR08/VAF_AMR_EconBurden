@@ -137,7 +137,7 @@ save(sample.AMR, file="outputs/sample_AMR_trunc.RData")
 
 ### building similar samples for LOS from other sources
 load("data_inputs/los_other.RData")
-cases <- read.csv("data_inputs/case_deaths_impact.csv")
+cases <- read.csv("data_inputs/case_deaths_impact_by_vaccine.csv")
 cases <- as.data.table(cases)
 
 combos <- unique(cases[,c('Infectious.syndrome',
@@ -416,4 +416,8 @@ DRI.temp <- AMR.noS.p[ ,c("group_id_c"  ,"run" ,
 
 DRI.all <- rbind(DRI.all, DRI.temp)
 
+### !!! note this means we have to update the run numbers as now have 2 run = 1 for each exposure group
+
 save(DRI.all, file="outputs/DRI_UC_los_trunc.RData")
+
+
