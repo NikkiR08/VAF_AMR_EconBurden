@@ -462,7 +462,7 @@ for (i in 1:nvac){
   
   temp <- substr(temp$vaccine_target_disease, start = 1, stop = 4)
   save(vaccine_output_dt, 
-       file=paste0("C:/Users/nichola.naylor/Documents/WHO_2023/VAF_AMR_EconBurden/outputs/fulloutput_chunks/results",temp,i,".RData"))
+       file=paste0("C:/Users/nichola.naylor/Documents/WHO_2023/VAF_AMR_EconBurden/outputs/fulloutput_chunks/",temp,i,".RData"))
   
 }
 
