@@ -1,4 +1,8 @@
-##########################************ CHUNK 1 ***************#################
+
+########### updated combining code 13/08
+
+### now removed age groups - sum at the start instead of the end
+
 #### loading packages
 library(tidyr)
 library(data.table)
@@ -15,6 +19,19 @@ load("data_inputs/epi_inputs_all.RData") ## cases
 cases <- all_data
 rm(all_data)
 
+### add up over age groups to speed up
+cases <- cases %>%
+  group_by(vaccine,Efficacy,Coverage,
+  Duration,DP,target_population,WHO.Region,
+  ISO3, Country,
+  Infectious.syndrome, Origin,
+  Pathogen, Antibiotic.class) %>%
+  summarise(cases_resistant=sum(cases_resistant),
+            deaths_resistant=sum(deaths_resistant) ,
+            vaccine_avertable_cases_resistance=sum(vaccine_avertable_cases_resistance), 
+          vaccine_avertable_deaths_resistant=sum(vaccine_avertable_deaths_resistant))
+
+## randomly select 1000 los costs for those where there are over 1000 samples (due to them being in e.g. DRI direct estimates and also adjust)
 hospital.prop <- read.csv("data_inputs/hospitalisation_proportion.csv") ## proportion hospitalised
 
 load("data_inputs/lit_review/who_whoc_wb.RData") ## region dictionary
@@ -126,8 +143,7 @@ setdiff(t1,t2)
 setnames(cases, "ISO3", "iso3c")
 
 ### keep only columns we want
-cases_averted <- cases[,c("Age.group",
-                          "vaccine_avertable_cases_resistance",
+cases_averted <- cases[,c( "vaccine_avertable_cases_resistance",
                           "cases_resistant",
                           "Antibiotic.class","Infectious.syndrome",
                           "gram.stain",                         
@@ -232,7 +248,7 @@ for (i in 1:nvac){
       gc()
       ###~~~ !!! check with the gastro nes & if cost_cases is the right one to use
       
-
+      
       ### !!! addition March 2023
       ## remove weighting towards bugs with more countries/age groups impacted
       ### note to make more robust in next iteration could do population weighted regional average values (?)
@@ -346,14 +362,14 @@ for (i in 1:nvac){
       all_costed[is.na(run) , run := run_region]
       ### tidy up columns
       all_costed <- all_costed[ ,c("los.DRI" , "iso3c" ,"whoc.region" ,"syndrome",                          
-                                   "class","gram.stain","WHO.Region" , "Age.group", "run", "cases_resistant",
+                                   "class","gram.stain","WHO.Region" ,  "run", "cases_resistant",
                                    "vaccine_avertable_cases_resistance","Antibiotic.class","Infectious.syndrome" ,              
                                    "Pathogen","prop_hospitalised", "cases_averted_hospitalised","cases_hospitalised",
                                    "vaccine_id","Origin")]
       
       ### check
       test2 <- all_costed[is.na(whoc.region)] ## should be 0 obs
-     
+      
       
       
       ## merge together with
@@ -369,7 +385,7 @@ for (i in 1:nvac){
       unique(DRI.whoc.n$iso3c)
       
       ## "PRK" "SOM" "SSD" "ZWE"
-
+      
       rm(DRI.whoc)
       
       setnames(sample.whoc.region,"region","whoc.region",skip_absent=TRUE)
@@ -399,7 +415,7 @@ for (i in 1:nvac){
       DRI.whoc.all[ , days_cases := los.DRI*cases_hospitalised]
       
       DRI.whoc.all <- DRI.whoc.all[,c("run","syndrome" ,"Infectious.syndrome","Antibiotic.class", 
-                                      "Pathogen", "class","WHO.Region", "Age.group",
+                                      "Pathogen", "class","WHO.Region", 
                                       "cases_averted_hospitalised", "cases_hospitalised",
                                       "los.cost" , "los.DRI",
                                       "avertable_cost_cases","avertable_days_cases", 
@@ -458,7 +474,7 @@ for (i in 1:nvac){
   
   temp <- vaccine_output_dt[1,]
   temp[, c("vaccine_target_disease","efficacy" ,"coverage"  ,
-                 "duration", "target disease","target population") := tstrsplit(vaccine_id, "_", fixed=TRUE)]
+           "duration", "target disease","target population") := tstrsplit(vaccine_id, "_", fixed=TRUE)]
   
   temp <- substr(temp$vaccine_target_disease, start = 1, stop = 4)
   save(vaccine_output_dt, 

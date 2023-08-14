@@ -628,7 +628,7 @@ total_wage_FC <- total_wage_FC[vaccine_id!="_NA_NA___"]
 write.csv(total_wage_FC, file="outputs/vaccine_avertable_FC.csv")
 
 
-######### SCENARIO 2 IN HC ###################
+######### ******SCENARIO 2 IN HC *****###################
 
 load("data_inputs/epi_inputs_all.RData") ## cases
 cases <- all_data

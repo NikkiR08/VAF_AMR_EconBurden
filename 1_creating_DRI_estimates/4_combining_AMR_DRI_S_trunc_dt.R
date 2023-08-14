@@ -18,6 +18,10 @@ set.seed(NULL) ## can't set seed with data table method as samples 1 value each 
 ## but much quicker than loop
 
 load("data_inputs/lit_review/los_output_cc_DRI.RData")
+
+### there's some duplication, remove 
+los.output.cc <- los.output.cc[!duplicated(los.output.cc), ]
+
 los.cc.DRI <- as.data.table(los.output.cc)
 los.cc.DRI[ , ID := c(1:nrow(los.cc.DRI))]
 rm(los.output.cc)
@@ -50,11 +54,15 @@ sample.DRI[ , TE.final.rep := TE.final] # makes it easier to check
 sample.DRI[ , TE.final.rep := rtruncnorm(1, a=lowerlimsamp, b=upperlimsamp.dri, mean=TE.final, sd=seTE.final)]
 sample.DRI[ , TE.final := TE.final.rep] 
 sample.DRI <- sample.DRI[ , -c("seTE.final","TE.final.rep")]
+sample.DRI[ , DRI.flag := 1]
 save(sample.DRI, file="outputs/sample_DRI_trunc.RData")
 
 ## and when TE<0 using global average as TE can be < minimum limit ??
 #
 load("data_inputs/lit_review/los_output_cc.RData")
+### there's some duplication, remove 
+los.output.cc <- los.output.cc[!duplicated(los.output.cc), ]
+
 los.cc.AMR <- as.data.table(los.output.cc)
 los.cc.AMR[ , ID := c(1:nrow(los.cc.AMR))]
 rm(los.output.cc)
@@ -132,12 +140,13 @@ sample.AMR[ , TE.final.rep := TE.final] # makes it easier to check
 sample.AMR[ , TE.final.rep := rtruncnorm(1, a=lowerlimsamp, b=upperlimsamp.amrs, mean=TE.final, sd=seTE.final)]
 sample.AMR[ , TE.final := TE.final.rep] 
 sample.AMR <- sample.AMR[ , -c("seTE.final","TE.final.rep")]
+
 save(sample.AMR, file="outputs/sample_AMR_trunc.RData")
 
 
 ### building similar samples for LOS from other sources
 load("data_inputs/los_other.RData")
-cases <- read.csv("data_inputs/case_deaths_impact.csv")
+cases <- read.csv("data_inputs/case_deaths_impact_by_vaccine.csv")
 cases <- as.data.table(cases)
 
 combos <- unique(cases[,c('Infectious.syndrome',
@@ -147,6 +156,9 @@ combos <- unique(cases[,c('Infectious.syndrome',
 salmonella <- combos[grepl('Salmonella', combos$Pathogen), ]
 
 load("data_inputs/lit_review/los_output_cc.RData")
+### there's some duplication, remove 
+los.output.cc <- los.output.cc[!duplicated(los.output.cc), ]
+
 los.cc.AMR <- as.data.table(los.output.cc)
 los.cc.AMR[ , ID := c(1:nrow(los.cc.AMR))]
 rm(los.output.cc)
@@ -275,9 +287,20 @@ sample.AMR.other <- rbindlist(los.cc.AMR.extra, idcol=TRUE)
 
 setnames(sample.AMR.other,".id","run")
 sample.AMR.other[ , TE.final.rep := TE.final] # makes it easier to check
-sample.AMR.other[ , TE.final.rep := rtrunc(n = 1, spec = "gamma", shape = TE.final, 
-                                           scale = seTE.final, 
-                                           a = lowerlimsamp, b=upperlimsamp.amrs)]
+# sample.AMR.other[ , TE.final.rep := rtrunc(n = 1, spec = "gamma", shape = TE.final, 
+#                                            scale = seTE.final, 
+#                                            a = lowerlimsamp, b=upperlimsamp.amrs)]
+### for some reason data table version not working any more so using loop
+
+for (i in 1:length(sample.AMR.other)){
+  shape <- sample.AMR.other[i,TE.final]
+  scale <- sample.AMR.other[i,seTE.final]
+  x <- rtrunc(n = 1, spec = "gamma", shape = shape, 
+              scale = scale, 
+              a = lowerlimsamp, b=upperlimsamp.amrs)
+  sample.AMR.other[ i, TE.final.rep := x]
+}
+
 
 sample.AMR.other[ , TE.final := TE.final.rep] 
 sample.AMR.other <- sample.AMR.other[ , -c("seTE.final","TE.final.rep")]
@@ -293,10 +316,10 @@ sample.DRI.other <- sample.DRI.other[iso3c.x !="EUSA"]
 sample.AMR.other <- sample.AMR.other[iso3c.x !="EUSA"]
 setdiff(unique(sample.AMR.other$iso3c.x),unique(sample.AMR$iso3c.x) )
 
-sample.DRI <- rbind(sample.DRI, sample.DRI.other)
+sample.DRI <- rbind(sample.DRI, sample.DRI.other,fill=TRUE)
 rm(sample.DRI.other)
 
-sample.AMR <- rbind(sample.AMR, sample.AMR.other)
+sample.AMR <- rbind(sample.AMR, sample.AMR.other, fill=TRUE)
 rm(sample.AMR.other)
 
 ## susceptible:
@@ -318,12 +341,13 @@ los.cc.thin.S <- los.cc.S[ , c("iso3c.x","whoc.region", "syndrome","class","gram
 list.los.cc.S <- rep(list(los.cc.thin.S),n.samples)
 sample.S <- rbindlist(list.los.cc.S, idcol=TRUE)
 
-setnames(sample.DRI,".id","run")
+setnames(sample.S,".id","run") 
+
 sample.S[ , TE.final.rep := TE.final] # makes it easier to check
 sample.S[ , TE.final.rep := rtruncnorm(1, a=lowerlimsamp, b=upperlimsamp.amrs, 
                                          mean=TE.final, sd=seTE.final)]
 sample.S[ , TE.final := TE.final.rep] 
-sample.S <- sample.DRI[ , -c("seTE.final","TE.final.rep")]
+sample.S <- sample.S[ , -c("seTE.final","TE.final.rep")]
 
 save(sample.S, file="outputs/sample_S_trunc.RData")
 
@@ -363,11 +387,12 @@ AMR.noS <- AMR.S.temp[is.na(los.S)]
 
 ## calculate DRI
 AMR.S[ ,los.DRI := los.S+los.AMR]
+AMR.S[ , AMR.S.flag := 1]
 
 ## combine with DRI estimates from AMR-UCR
 AMR.S.DRI <- AMR.S[ , c("group_id_c","run", "los.DRI")]
-los.DRI <- los.DRI[ , c("group_id_c","run", "los.DRI")]
-DRI.all <- rbind(AMR.S.DRI,los.DRI)
+los.DRI <- los.DRI[ , c("group_id_c","run", "los.DRI","DRI.flag")]
+DRI.all <- rbind(AMR.S.DRI,los.DRI, fill=TRUE)
 
 ## calculate the proportional difference between AMR & DRI 
 ## to use for those where we just have AMR costs 
@@ -414,6 +439,39 @@ AMR.noS.p[ , los.DRI := (los.AMR*prop)]
 DRI.temp <- AMR.noS.p[ ,c("group_id_c"  ,"run" ,
                           "los.DRI")]
 
-DRI.all <- rbind(DRI.all, DRI.temp)
+DRI.all <- rbind(DRI.all, DRI.temp, fill=TRUE)
+
+### still have duplicates for those who are in multiple ways of calculating  DRI for that exposure group
+x<- DRI.all[ , -c("los.DRI")]
+x <- x[ ,-c("DRI.flag")]
+x <- x[,list(Count=.N),names(x)]
+unique(x$Count)
+### there were more than 1s this time
+y <- x[Count>1]
+
+
+### some have large run --> really slow runs and also means different variables sampled different number of times
+
+## merge in count variable
+DRI.all.clean <- merge(DRI.all, x,by=c("group_id_c","run"))
+
+## keep those with 1 run per group or >1 count from DRI sample (i.e. prioritise DRI extracted data if available)
+DRI.all.clean <- DRI.all.clean[Count==1 |(Count>1 & DRI.flag==1)]
+
+## create a new run id for each group id so as to not double count runs as cases/costs
+DRI.all.clean <- DRI.all.clean[, run := sequence(.N), by = c("group_id_c")]
+
+## remove unnecessary rows and replace old DRI.all to save
+DRI.all.clean <- DRI.all.clean[ , -c("DRI.flag" ,  "Count"  )]
+DRI.all <- DRI.all.clean
+
+x<- DRI.all[ , -c("los.DRI")]
+x <- x[,list(Count=.N),names(x)]
+unique(x$Count)
+### there were more than 1s this time
+y <- x[Count>1]
+## should be 0 obs in y now 
 
 save(DRI.all, file="outputs/DRI_UC_los_trunc.RData")
+
+
