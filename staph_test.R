@@ -1198,3 +1198,20 @@ cases_averted_all <- cases_averted
     
     ## AFG_EMRO D_BSI_3g cephalosporins_gn 
     ## USA_AMRO A_COL/INF_carbapenems_gn
+    
+    
+    ###### testing group a strep ########
+    load("data_inputs/epi_inputs_all.RData")
+    load("outputs/fulloutput_chunks/Grou27.RData")
+    
+    x <- vaccine_output_dt[1,]
+    x <- x[1:5,]
+    
+    y <- all_data[ISO3=="AFG" & Pathogen=="Group A Streptococcus" & 
+                    Antibiotic.class=="Macrolide" & Infectious.syndrome=="BSI"]
+                  
+    sum(y$cases_resistant)
+    
+    ## testing non-typhoidal salmonella
+    
+    
