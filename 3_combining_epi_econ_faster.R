@@ -88,16 +88,10 @@ cases[Infectious.syndrome=="Bone and joint infections", syndrome:="B-J"]
 cases[Infectious.syndrome=="Diarrhoea", syndrome:="GI"]
 cases[Infectious.syndrome=="Cardiac infections", syndrome:="CARDIAC"]
 cases[Infectious.syndrome=="CNS infections", syndrome:="CNS"]
-cases[Infectious.syndrome=="Typhoid, paratyphoid, and iNTS", syndrome := "INF"] ## to match LOS
+cases[Infectious.syndrome=="Typhoid, paratyphoid, and iNTS", syndrome := "Typhoid, paratyphoid, and iNTS"] 
 
 cases[Infectious.syndrome=="TB", syndrome:="RTI_TB"] ## separating out due to large cost difference
 DRI.all[gram.stain=="tb", syndrome :="RTI_TB"]
-
-cases[Pathogen=="Non-typhoidal Salmonella"|
-        Pathogen=="Salmonella Typhi"|
-        Pathogen=="Salmonella Paratyphi"|
-        Pathogen=="Haemophilus influenzae"|
-        Pathogen=="Group A Streptococcus", syndrome := "INF"] ## to match to "other los" which was all salmonella infections
 
 cases[Antibiotic.class=="Carbapenems", class:="carbapenems"]    
 cases[Antibiotic.class=="Third-generation cephalosporins", 
@@ -173,6 +167,12 @@ cases_averted[ , cases_averted_hospitalised := vaccine_avertable_cases_resistanc
 cases_averted[ , cases_hospitalised := cases_resistant*prop_hospitalised]
 
 rm(hospital.prop)
+
+cases_averted[Pathogen=="Non-typhoidal Salmonella"|
+        Pathogen=="Salmonella Typhi"|
+        Pathogen=="Salmonella Paratyphi"|
+        Pathogen=="Haemophilus influenzae"|
+        Pathogen=="Group A Streptococcus", syndrome := "INF"] ## to match to "other los" which was all salmonella infections
 
 ### if want to remove NA values (those with no cases_averted or proportional of hospitalisation data)
 # cases_averted <- cases_averted[(!is.na(cases_averted_hospitalised)&
