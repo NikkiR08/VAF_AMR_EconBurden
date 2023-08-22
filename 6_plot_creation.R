@@ -54,7 +54,6 @@ keep_vac_prod <- c(
   , "Mycobacterium tuberculosis - Improved_0.8_0.7_10 years_All_0 weeks + boost every 10 years"                                    
   , "Shigella_0.6_0.7_5 years_All_6 months"  ) 
 
-######### !!! need to add back in the removal of double counting ETEC UTI etc.
 ##### 
 
 ## selecting ones that have the theoretical biggest impact (e.g. most age groups/syndromes)
