@@ -195,6 +195,9 @@ nvac
 
 cases_averted_all <- cases_averted
 
+### added order by name so then less by hand updating needed in table creation 
+sort(vaccines)
+
 for (i in 1:nvac){  
   
   rm(vaccine_output)
