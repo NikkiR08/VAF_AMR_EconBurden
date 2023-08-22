@@ -10,7 +10,7 @@ library(ggplot2)
 ##### read in data
 
 #### !!! update "XXXXX" to e.g. "C:/Users..." depending on where project saved
-myfiles = list.files(path="C:/Users/nicho/OneDrive/Documents/VAF_AMR_EconBurden/outputs/fulloutput_chunks/",
+myfiles = list.files(path="C:/Users/nichola.naylor/Documents/WHO_2023/VAF_AMR_EconBurden/outputs/fulloutput_chunks/",
                      pattern="*.RData", full.names = TRUE)
 
 ### !!! in future iterations would be good to explore why NA scenarios come up
@@ -27,16 +27,16 @@ myfiles = list.files(path="C:/Users/nicho/OneDrive/Documents/VAF_AMR_EconBurden/
 #### could try to get 1 function where you just specify the group_by variables then just run that
 ### for each
 
-adj <- c("C:/Users/nicho/OneDrive/Documents/VAF_AMR_EconBurden/outputs/fulloutput_chunks/resultsStre19.RData",
-         "C:/Users/nicho/OneDrive/Documents/VAF_AMR_EconBurden/outputs/fulloutput_chunks/resultsStre20.RData",
-        "C:/Users/nicho/OneDrive/Documents/VAF_AMR_EconBurden/outputs/fulloutput_chunks/resultsStre23.RData",
-         "C:/Users/nicho/OneDrive/Documents/VAF_AMR_EconBurden/outputs/fulloutput_chunks/resultsStre24.RData",
-       "C:/Users/nicho/OneDrive/Documents/VAF_AMR_EconBurden/outputs/fulloutput_chunks/resultsStre25.RData",
-         "C:/Users/nicho/OneDrive/Documents/VAF_AMR_EconBurden/outputs/fulloutput_chunks/resultsStre35.RData",
-         "C:/Users/nicho/OneDrive/Documents/VAF_AMR_EconBurden/outputs/fulloutput_chunks/resultsStre36.RData",
-       "C:/Users/nicho/OneDrive/Documents/VAF_AMR_EconBurden/outputs/fulloutput_chunks/resultsStre37.RData",
-       "C:/Users/nicho/OneDrive/Documents/VAF_AMR_EconBurden/outputs/fulloutput_chunks/resultsHaem28.RData",
-       "C:/Users/nicho/OneDrive/Documents/VAF_AMR_EconBurden/outputs/fulloutput_chunks/resultsHaem29.RData")
+adj <- c("C:/Users/nichola.naylor/Documents/WHO_2023/VAF_AMR_EconBurden/outputs/fulloutput_chunks/Stre24.RData",
+         "C:/Users/nichola.naylor/Documents/WHO_2023/VAF_AMR_EconBurden/outputs/fulloutput_chunks/Stre25.RData",
+         "C:/Users/nichola.naylor/Documents/WHO_2023/VAF_AMR_EconBurden/outputs/fulloutput_chunks/Stre27.RData",
+         "C:/Users/nichola.naylor/Documents/WHO_2023/VAF_AMR_EconBurden/outputs/fulloutput_chunks/Stre28.RData",
+         "C:/Users/nichola.naylor/Documents/WHO_2023/VAF_AMR_EconBurden/outputs/fulloutput_chunks/Stre33.RData",
+         "C:/Users/nichola.naylor/Documents/WHO_2023/VAF_AMR_EconBurden/outputs/fulloutput_chunks/Stre34.RData",
+         "C:/Users/nichola.naylor/Documents/WHO_2023/VAF_AMR_EconBurden/outputs/fulloutput_chunks/Stre35.RData",
+         "C:/Users/nichola.naylor/Documents/WHO_2023/VAF_AMR_EconBurden/outputs/fulloutput_chunks/Stre36.RData",
+       "C:/Users/nicho/OneDrive/Documents/VAF_AMR_EconBurden/outputs/fulloutput_chunks/resultsHaem29.RData",
+       "C:/Users/nicho/OneDrive/Documents/VAF_AMR_EconBurden/outputs/fulloutput_chunks/resultsHaem32.RData")
 
 nonadj <- setdiff(myfiles,adj) ## find ones that don't need adjusting
        
@@ -95,12 +95,14 @@ for (i in 1:length(nonadj)){
 ########### adj ################
 hospital_cost_l_adj <- list()
 
+## note that strep26 & Haem30 results are Current coverage - not included in below 
+
 ##### loading the datasets we need
 ### adding dataset ref by hand re. numbers so would need checking if updated 
 ### scenarios !!!
-load("outputs/fulloutput_chunks/resultsStre19.RData")
+load("outputs/fulloutput_chunks/Stre24.RData") ##updated 22/08
 serotype.58 <- vaccine_output_dt
-load("outputs/fulloutput_chunks/resultsStre34.RData")
+load("outputs/fulloutput_chunks/Stre33.RData") ## updated 22/08
 serotype <- rbind(vaccine_output_dt,serotype.58)
 rm(serotype.58)
 ## ?? coming up with error but still creates the right data table ??
@@ -110,9 +112,9 @@ serotype[ , vaccine_id := "Streptococcus pneumoniae_both_0.9_5 years_BSI, CNS in
 hospital_cost_l_adj[[1]] <- mediqr1(serotype)
 
 
-load("outputs/fulloutput_chunks/resultsStre23.RData")
+load("outputs/fulloutput_chunks/Stre25.RData") ## updated 22/08
 serotype.58.eld <- vaccine_output_dt
-load("outputs/fulloutput_chunks/resultsStre36.RData")
+load("outputs/fulloutput_chunks/Stre34.RData") ##updated 22/08
 serotype.eld <- rbind(vaccine_output_dt, serotype.58.eld)
 rm(serotype.58.eld)
 unique(serotype.eld$vaccine_id)
@@ -120,9 +122,9 @@ serotype.eld <- serotype.eld[!is.na(vaccine_id)] ## remove those not associated 
 serotype.eld[ , vaccine_id := "Streptococcus pneumoniae_both_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6, 10, 14 weeks & elderly age group"]
 hospital_cost_l_adj[[2]] <- mediqr1(serotype.eld)
 
-load("outputs/fulloutput_chunks/resultsStre20.RData")
+load("outputs/fulloutput_chunks/Stre27.RData") ## updated 22/08
 improv.7 <- vaccine_output_dt
-load("outputs/fulloutput_chunks/resultsStre35.RData")
+load("outputs/fulloutput_chunks/Stre35.RData") ## updated 22/08
 improv <- rbind(vaccine_output_dt, improv.7)
 rm(improv.7)
 unique(improv$vaccine_id)
@@ -130,9 +132,9 @@ improv <- improv[!is.na(vaccine_id)] ## remove those not associated with any vac
 improv[ , vaccine_id := "Streptococcus pneumoniae - Improved_both_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6 weeks"]
 hospital_cost_l_adj[[3]] <- mediqr1(improv)
 
-load("outputs/fulloutput_chunks/resultsStre37.RData")
+load("outputs/fulloutput_chunks/Stre36.RData") ## updated 22/08
 improv.5.eld <- vaccine_output_dt
-load("outputs/fulloutput_chunks/resultsStre24.RData")
+load("outputs/fulloutput_chunks/Stre28.RData") ## updated 22/08
 improv.eld <- rbind(vaccine_output_dt,improv.5.eld)
 rm(improv.5.eld)
 unique(improv.eld$vaccine_id)
@@ -142,9 +144,9 @@ hospital_cost_l_adj[[4]] <- mediqr1(improv.eld)
 
 
 ### HiB
-load("outputs/fulloutput_chunks/resultsHaem28.RData")
+load("outputs/fulloutput_chunks/Haem29.RData") ## updated 22/08
 Hib_93 <- vaccine_output_dt
-load("outputs/fulloutput_chunks/resultsHaem29.RData")
+load("outputs/fulloutput_chunks/Haem32.RData")## updated 22/08
 Hib <- rbind(vaccine_output_dt,Hib_93)
 rm(Hib_93)
 unique(Hib$vaccine_id)
@@ -159,6 +161,7 @@ hospital_c <- rbind(hospital_c,hospital_cA)
 
 ###!!! not including those to mapped to any vaccine ID
 hospital_c <- hospital_c[vaccine_id!="_NA_NA___"]
+hospital_c <- hospital_c[Pathogen!="NA"]
 
 hospital_c <- dcast(hospital_c, Pathogen + Infectious.syndrome +
                       vaccine_id ~ WHO.Region, value.var = c( "median_iqr_total_cost" 
@@ -242,6 +245,7 @@ hospital_c[, c("vaccine_target_disease","efficacy" ,"coverage"  ,
 
 ###!!! not including those to mapped to any vaccine ID
 hospital_c <- hospital_c[vaccine_id!="_NA_NA___"]
+hospital_c <- hospital_c[Pathogen!="NA"]
 
 save(hospital_c,file="outputs/hospitalC_region_averted.RData")
 
@@ -390,6 +394,7 @@ hospital_c[, c("vaccine_target_disease","efficacy" ,"coverage"  ,
 
 ###!!! not including those to mapped to any vaccine ID
 hospital_c <- hospital_c[vaccine_id!="_NA_NA___"]
+hospital_c <- hospital_c[Pathogen!="NA"]
 
 save(hospital_c,file="outputs/hospitalC_region_averted_pathogen.RData")
 
@@ -536,6 +541,8 @@ hospital_c[, c("vaccine_target_disease","efficacy" ,"coverage"  ,
 
 ###!!! not including those to mapped to any vaccine ID
 hospital_c <- hospital_c[vaccine_id!="_NA_NA___"]
+hospital_c <- hospital_c[Pathogen!="NA"]
+
 save(hospital_c,file="outputs/hospitalC_global_averted.RData")
 
 
@@ -683,6 +690,7 @@ hospital_c[, c("vaccine_target_disease","efficacy" ,"coverage"  ,
 
 ###!!! not including those to mapped to any vaccine ID
 hospital_c <- hospital_c[vaccine_id!="_NA_NA___"]
+hospital_c <- hospital_c[Pathogen!="NA"]
 
 save(hospital_c,file="outputs/hospitalC_global_averted_pathogen.RData")
 
@@ -829,6 +837,7 @@ hospital_c[, c("vaccine_target_disease","efficacy" ,"coverage"  ,
 
 ###!!! not including those to mapped to any vaccine ID
 hospital_c <- hospital_c[vaccine_id!="_NA_NA___"]
+hospital_c <- hospital_c[Pathogen!="NA"]
 
 save(hospital_c,file="outputs/hospitalC_global_averted_pathogen_syndrome.RData")
 
