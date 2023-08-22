@@ -32,22 +32,22 @@ for (i in 1:length(myfiles)){
     summarise(Mean_avert_costing = mean(who_region_cost_A, na.rm=TRUE),
               LOWUI_avert_costing = quantile(who_region_cost_A,0.025, na.rm = TRUE),
               HIGHUI_avert_costing = quantile(who_region_cost_A,0.975, na.rm = TRUE),
-              Mean_total_costing = mean(who_region_cost_T, na.rm=TRUE),
+              total_costing = mean(who_region_cost_T, na.rm=TRUE),
               LOWUI_total_costing = quantile(who_region_cost_T,0.025, na.rm = TRUE),
               HIGHUI_total_costing = quantile(who_region_cost_T,0.975, na.rm = TRUE),
               Mean_avert_days = mean(who_region_days_A, na.rm=TRUE),
               LOWUI_avert_days = quantile(who_region_days_A,0.025, na.rm = TRUE),
               HIGHUI_avert_days = quantile(who_region_days_A,0.975, na.rm = TRUE),
-              Mean_total_days = mean(who_region_days_T, na.rm=TRUE),
+              total_days = mean(who_region_days_T, na.rm=TRUE),
               LOWUI_total_days = quantile(who_region_days_T,0.025, na.rm = TRUE),
               HIGHUI_total_days = quantile(who_region_days_T,0.975, na.rm = TRUE)) %>%
     mutate(across(Mean_avert_costing:HIGHUI_total_days,
                   ~ format(., big.mark = ",", scientific = F)))%>%
-    mutate( mean_ci_total_cost = str_c(Mean_total_costing, " ( ", LOWUI_total_costing, "-",
+    mutate( mean_ci_total_cost = str_c(total_costing, " ( ", LOWUI_total_costing, "-",
                                   HIGHUI_total_costing," ) "),
             mean_ci_averted_cost = str_c(Mean_avert_costing, " ( ", LOWUI_avert_costing, "-",
                                    HIGHUI_avert_costing," ) "),
-            mean_ci_total_days = str_c(Mean_total_days, " ( ", LOWUI_total_days, "-",
+            mean_ci_total_days = str_c(total_days, " ( ", LOWUI_total_days, "-",
                                        HIGHUI_total_days," ) "),
             mean_ci_averted_days = str_c(Mean_avert_days, " ( ", LOWUI_avert_days, "-",
                                          HIGHUI_avert_days," ) ")
@@ -59,10 +59,10 @@ for (i in 1:length(myfiles)){
 hospital_c <- rbindlist(hospital_cost_l)
 hospital_c <- hospital_c[!is.na(Pathogen)]
 hospital_c <- hospital_c[ , -c("Mean_avert_costing",  "LOWUI_avert_costing",
-                               "HIGHUI_avert_costing", "Mean_total_costing" ,
+                               "HIGHUI_avert_costing", "total_costing" ,
                                "LOWUI_total_costing" , "HIGHUI_total_costing" ,
                                "Mean_avert_days",  "LOWUI_avert_days",
-                               "HIGHUI_avert_days", "Mean_total_days" ,
+                               "HIGHUI_avert_days", "total_days" ,
                                "LOWUI_total_days" , "HIGHUI_total_days" )]
 hospital_c <- dcast(hospital_c, Pathogen + Infectious.syndrome +
                       vaccine_id ~ WHO.Region, value.var = c("mean_ci_total_cost",
@@ -97,22 +97,22 @@ for (i in 1:length(myfiles)){
     summarise(Mean_avert_costing = mean(who_region_cost_A, na.rm=TRUE),
               LOWUI_avert_costing = quantile(who_region_cost_A,0.025, na.rm = TRUE),
               HIGHUI_avert_costing = quantile(who_region_cost_A,0.975, na.rm = TRUE),
-              Mean_total_costing = mean(who_region_cost_T, na.rm=TRUE),
+              total_costing = mean(who_region_cost_T, na.rm=TRUE),
               LOWUI_total_costing = quantile(who_region_cost_T,0.025, na.rm = TRUE),
               HIGHUI_total_costing = quantile(who_region_cost_T,0.975, na.rm = TRUE),
               Mean_avert_days = mean(who_region_days_A, na.rm=TRUE),
               LOWUI_avert_days = quantile(who_region_days_A,0.025, na.rm = TRUE),
               HIGHUI_avert_days = quantile(who_region_days_A,0.975, na.rm = TRUE),
-              Mean_total_days = mean(who_region_days_T, na.rm=TRUE),
+              total_days = mean(who_region_days_T, na.rm=TRUE),
               LOWUI_total_days = quantile(who_region_days_T,0.025, na.rm = TRUE),
               HIGHUI_total_days = quantile(who_region_days_T,0.975, na.rm = TRUE)) %>%
     mutate(across(Mean_avert_costing:HIGHUI_total_days,
                   ~ format(., big.mark = ",", scientific = F)))%>%
-    mutate( mean_ci_total_cost = str_c(Mean_total_costing, " ( ", LOWUI_total_costing, "-",
+    mutate( mean_ci_total_cost = str_c(total_costing, " ( ", LOWUI_total_costing, "-",
                                        HIGHUI_total_costing," ) "),
             mean_ci_averted_cost = str_c(Mean_avert_costing, " ( ", LOWUI_avert_costing, "-",
                                          HIGHUI_avert_costing," ) "),
-            mean_ci_total_days = str_c(Mean_total_days, " ( ", LOWUI_total_days, "-",
+            mean_ci_total_days = str_c(total_days, " ( ", LOWUI_total_days, "-",
                                        HIGHUI_total_days," ) "),
             mean_ci_averted_days = str_c(Mean_avert_days, " ( ", LOWUI_avert_days, "-",
                                          HIGHUI_avert_days," ) ")
@@ -124,10 +124,10 @@ for (i in 1:length(myfiles)){
 hospital_c <- rbindlist(hospital_cost_l)
 hospital_c <- hospital_c[!is.na(Pathogen)]
 hospital_c <- hospital_c[ , -c("Mean_avert_costing",  "LOWUI_avert_costing",
-                               "HIGHUI_avert_costing", "Mean_total_costing" ,
+                               "HIGHUI_avert_costing", "total_costing" ,
                                "LOWUI_total_costing" , "HIGHUI_total_costing" ,
                                "Mean_avert_days",  "LOWUI_avert_days",
-                               "HIGHUI_avert_days", "Mean_total_days" ,
+                               "HIGHUI_avert_days", "total_days" ,
                                "LOWUI_total_days" , "HIGHUI_total_days" )]
 
 hospital_c[, c("vaccine_target_disease","efficacy" ,"coverage"  ,
@@ -155,22 +155,22 @@ for (i in 1:length(myfiles)){
     summarise(Mean_avert_costing = mean(who_region_cost_A, na.rm=TRUE),
               LOWUI_avert_costing = quantile(who_region_cost_A,0.025, na.rm = TRUE),
               HIGHUI_avert_costing = quantile(who_region_cost_A,0.975, na.rm = TRUE),
-              Mean_total_costing = mean(who_region_cost_T, na.rm=TRUE),
+              total_costing = mean(who_region_cost_T, na.rm=TRUE),
               LOWUI_total_costing = quantile(who_region_cost_T,0.025, na.rm = TRUE),
               HIGHUI_total_costing = quantile(who_region_cost_T,0.975, na.rm = TRUE),
               Mean_avert_days = mean(who_region_days_A, na.rm=TRUE),
               LOWUI_avert_days = quantile(who_region_days_A,0.025, na.rm = TRUE),
               HIGHUI_avert_days = quantile(who_region_days_A,0.975, na.rm = TRUE),
-              Mean_total_days = mean(who_region_days_T, na.rm=TRUE),
+              total_days = mean(who_region_days_T, na.rm=TRUE),
               LOWUI_total_days = quantile(who_region_days_T,0.025, na.rm = TRUE),
               HIGHUI_total_days = quantile(who_region_days_T,0.975, na.rm = TRUE)) %>%
     mutate(across(Mean_avert_costing:HIGHUI_total_days,
                   ~ format(., big.mark = ",", scientific = F)))%>%
-    mutate( mean_ci_total_cost = str_c(Mean_total_costing, " ( ", LOWUI_total_costing, "-",
+    mutate( mean_ci_total_cost = str_c(total_costing, " ( ", LOWUI_total_costing, "-",
                                        HIGHUI_total_costing," ) "),
             mean_ci_averted_cost = str_c(Mean_avert_costing, " ( ", LOWUI_avert_costing, "-",
                                          HIGHUI_avert_costing," ) "),
-            mean_ci_total_days = str_c(Mean_total_days, " ( ", LOWUI_total_days, "-",
+            mean_ci_total_days = str_c(total_days, " ( ", LOWUI_total_days, "-",
                                        HIGHUI_total_days," ) "),
             mean_ci_averted_days = str_c(Mean_avert_days, " ( ", LOWUI_avert_days, "-",
                                          HIGHUI_avert_days," ) ")
@@ -182,10 +182,10 @@ for (i in 1:length(myfiles)){
 hospital_c <- rbindlist(hospital_cost_l)
 hospital_c <- hospital_c[!is.na(Pathogen)]
 hospital_c <- hospital_c[ , -c("Mean_avert_costing",  "LOWUI_avert_costing",
-                               "HIGHUI_avert_costing", "Mean_total_costing" ,
+                               "HIGHUI_avert_costing", "total_costing" ,
                                "LOWUI_total_costing" , "HIGHUI_total_costing" ,
                                "Mean_avert_days",  "LOWUI_avert_days",
-                               "HIGHUI_avert_days", "Mean_total_days" ,
+                               "HIGHUI_avert_days", "total_days" ,
                                "LOWUI_total_days" , "HIGHUI_total_days" )]
 hospital_c <- dcast(hospital_c, Pathogen +
                       vaccine_id ~ WHO.Region, value.var = c("mean_ci_total_cost",
@@ -218,22 +218,22 @@ for (i in 1:length(myfiles)){
     summarise(Mean_avert_costing = mean(who_region_cost_A, na.rm=TRUE),
               LOWUI_avert_costing = quantile(who_region_cost_A,0.025, na.rm = TRUE),
               HIGHUI_avert_costing = quantile(who_region_cost_A,0.975, na.rm = TRUE),
-              Mean_total_costing = mean(who_region_cost_T, na.rm=TRUE),
+              total_costing = mean(who_region_cost_T, na.rm=TRUE),
               LOWUI_total_costing = quantile(who_region_cost_T,0.025, na.rm = TRUE),
               HIGHUI_total_costing = quantile(who_region_cost_T,0.975, na.rm = TRUE),
               Mean_avert_days = mean(who_region_days_A, na.rm=TRUE),
               LOWUI_avert_days = quantile(who_region_days_A,0.025, na.rm = TRUE),
               HIGHUI_avert_days = quantile(who_region_days_A,0.975, na.rm = TRUE),
-              Mean_total_days = mean(who_region_days_T, na.rm=TRUE),
+              total_days = mean(who_region_days_T, na.rm=TRUE),
               LOWUI_total_days = quantile(who_region_days_T,0.025, na.rm = TRUE),
               HIGHUI_total_days = quantile(who_region_days_T,0.975, na.rm = TRUE)) %>%
     mutate(across(Mean_avert_costing:HIGHUI_total_days,
                   ~ format(., big.mark = ",", scientific = F)))%>%
-    mutate( mean_ci_total_cost = str_c(Mean_total_costing, " ( ", LOWUI_total_costing, "-",
+    mutate( mean_ci_total_cost = str_c(total_costing, " ( ", LOWUI_total_costing, "-",
                                        HIGHUI_total_costing," ) "),
             mean_ci_averted_cost = str_c(Mean_avert_costing, " ( ", LOWUI_avert_costing, "-",
                                          HIGHUI_avert_costing," ) "),
-            mean_ci_total_days = str_c(Mean_total_days, " ( ", LOWUI_total_days, "-",
+            mean_ci_total_days = str_c(total_days, " ( ", LOWUI_total_days, "-",
                                        HIGHUI_total_days," ) "),
             mean_ci_averted_days = str_c(Mean_avert_days, " ( ", LOWUI_avert_days, "-",
                                          HIGHUI_avert_days," ) ")
@@ -245,10 +245,10 @@ for (i in 1:length(myfiles)){
 hospital_c <- rbindlist(hospital_cost_l)
 hospital_c <- hospital_c[!is.na(Pathogen)]
 hospital_c <- hospital_c[ , -c("Mean_avert_costing",  "LOWUI_avert_costing",
-                               "HIGHUI_avert_costing", "Mean_total_costing" ,
+                               "HIGHUI_avert_costing", "total_costing" ,
                                "LOWUI_total_costing" , "HIGHUI_total_costing" ,
                                "Mean_avert_days",  "LOWUI_avert_days",
-                               "HIGHUI_avert_days", "Mean_total_days" ,
+                               "HIGHUI_avert_days", "total_days" ,
                                "LOWUI_total_days" , "HIGHUI_total_days" )]
 
 hospital_c[, c("vaccine_target_disease","efficacy" ,"coverage"  ,
@@ -270,9 +270,9 @@ rm(hospital_cost_l)
 #### psuedo #####
 ##### read in data
 
-load( "outputs/fulloutput_chunks/resultsPseu8.RData")
+load( "outputs/fulloutput_chunks/Pseu14.RData")
 psuedo1 <- vaccine_output_dt
-load("outputs/fulloutput_chunks/resultsPseu15.RData")
+load("outputs/fulloutput_chunks/Pseu15.RData")
 psuedo2 <- vaccine_output_dt
 rm(vaccine_output_dt)
 
@@ -297,32 +297,32 @@ spec.syndrome <- function(dt){
     summarise(Mean_avert_costing = mean(who_region_cost_A, na.rm=TRUE),
               LOWUI_avert_costing = quantile(who_region_cost_A,0.025, na.rm = TRUE),
               HIGHUI_avert_costing = quantile(who_region_cost_A,0.975, na.rm = TRUE),
-              Mean_total_costing = mean(who_region_cost_T, na.rm=TRUE),
+              total_costing = mean(who_region_cost_T, na.rm=TRUE),
               LOWUI_total_costing = quantile(who_region_cost_T,0.025, na.rm = TRUE),
               HIGHUI_total_costing = quantile(who_region_cost_T,0.975, na.rm = TRUE),
               Mean_avert_days = mean(who_region_days_A, na.rm=TRUE),
               LOWUI_avert_days = quantile(who_region_days_A,0.025, na.rm = TRUE),
               HIGHUI_avert_days = quantile(who_region_days_A,0.975, na.rm = TRUE),
-              Mean_total_days = mean(who_region_days_T, na.rm=TRUE),
+              total_days = mean(who_region_days_T, na.rm=TRUE),
               LOWUI_total_days = quantile(who_region_days_T,0.025, na.rm = TRUE),
               HIGHUI_total_days = quantile(who_region_days_T,0.975, na.rm = TRUE)) %>%
     mutate(across(Mean_avert_costing:HIGHUI_total_days,
                   ~ format(., big.mark = ",", scientific = F)))%>%
-    mutate( mean_ci_total_cost = str_c(Mean_total_costing, " ( ", LOWUI_total_costing, "-",
+    mutate( mean_ci_total_cost = str_c(total_costing, " ( ", LOWUI_total_costing, "-",
                                        HIGHUI_total_costing," ) "),
             mean_ci_averted_cost = str_c(Mean_avert_costing, " ( ", LOWUI_avert_costing, "-",
                                          HIGHUI_avert_costing," ) "),
-            mean_ci_total_days = str_c(Mean_total_days, " ( ", LOWUI_total_days, "-",
+            mean_ci_total_days = str_c(total_days, " ( ", LOWUI_total_days, "-",
                                        HIGHUI_total_days," ) "),
             mean_ci_averted_days = str_c(Mean_avert_days, " ( ", LOWUI_avert_days, "-",
                                          HIGHUI_avert_days," ) "))%>%
     as.data.table()
 
 hospital_c <- hospital_c[ , -c("Mean_avert_costing",  "LOWUI_avert_costing",
-                               "HIGHUI_avert_costing", "Mean_total_costing" ,
+                               "HIGHUI_avert_costing", "total_costing" ,
                                "LOWUI_total_costing" , "HIGHUI_total_costing" ,
                                "Mean_avert_days",  "LOWUI_avert_days",
-                               "HIGHUI_avert_days", "Mean_total_days" ,
+                               "HIGHUI_avert_days", "total_days" ,
                                "LOWUI_total_days" , "HIGHUI_total_days" )]
 hospital_c <- dcast(hospital_c, Pathogen + 
                       vaccine_id ~ WHO.Region, value.var = c("mean_ci_total_cost",
@@ -355,32 +355,32 @@ hospital_c <- dt %>% group_by(Pathogen,
   summarise(Mean_avert_costing = mean(who_region_cost_A, na.rm=TRUE),
             LOWUI_avert_costing = quantile(who_region_cost_A,0.025, na.rm = TRUE),
             HIGHUI_avert_costing = quantile(who_region_cost_A,0.975, na.rm = TRUE),
-            Mean_total_costing = mean(who_region_cost_T, na.rm=TRUE),
+            total_costing = mean(who_region_cost_T, na.rm=TRUE),
             LOWUI_total_costing = quantile(who_region_cost_T,0.025, na.rm = TRUE),
             HIGHUI_total_costing = quantile(who_region_cost_T,0.975, na.rm = TRUE),
             Mean_avert_days = mean(who_region_days_A, na.rm=TRUE),
             LOWUI_avert_days = quantile(who_region_days_A,0.025, na.rm = TRUE),
             HIGHUI_avert_days = quantile(who_region_days_A,0.975, na.rm = TRUE),
-            Mean_total_days = mean(who_region_days_T, na.rm=TRUE),
+            total_days = mean(who_region_days_T, na.rm=TRUE),
             LOWUI_total_days = quantile(who_region_days_T,0.025, na.rm = TRUE),
             HIGHUI_total_days = quantile(who_region_days_T,0.975, na.rm = TRUE)) %>%
   mutate(across(Mean_avert_costing:HIGHUI_total_days,
                 ~ format(., big.mark = ",", scientific = F)))%>%
-  mutate( mean_ci_total_cost = str_c(Mean_total_costing, " ( ", LOWUI_total_costing, "-",
+  mutate( mean_ci_total_cost = str_c(total_costing, " ( ", LOWUI_total_costing, "-",
                                      HIGHUI_total_costing," ) "),
           mean_ci_averted_cost = str_c(Mean_avert_costing, " ( ", LOWUI_avert_costing, "-",
                                        HIGHUI_avert_costing," ) "),
-          mean_ci_total_days = str_c(Mean_total_days, " ( ", LOWUI_total_days, "-",
+          mean_ci_total_days = str_c(total_days, " ( ", LOWUI_total_days, "-",
                                      HIGHUI_total_days," ) "),
           mean_ci_averted_days = str_c(Mean_avert_days, " ( ", LOWUI_avert_days, "-",
                                        HIGHUI_avert_days," ) "))%>%
   as.data.table()
 
 hospital_c <- hospital_c[ , -c("Mean_avert_costing",  "LOWUI_avert_costing",
-                               "HIGHUI_avert_costing", "Mean_total_costing" ,
+                               "HIGHUI_avert_costing", "total_costing" ,
                                "LOWUI_total_costing" , "HIGHUI_total_costing" ,
                                "Mean_avert_days",  "LOWUI_avert_days",
-                               "HIGHUI_avert_days", "Mean_total_days" ,
+                               "HIGHUI_avert_days", "total_days" ,
                                "LOWUI_total_days" , "HIGHUI_total_days" )]
 
 hospital_c[, c("vaccine_target_disease","efficacy" ,"coverage"  ,
@@ -404,31 +404,31 @@ rm(psuedo)
  ## "BSI", "CNS infections", "Cardiac infections" and "LRI and thorax infections"
 
 ## load files ###!!! this might need redoing if order of runs changes - check 1st row after loading & before assigning
-load("outputs/fulloutput_chunks/resultsStre19.RData")
+load("outputs/fulloutput_chunks/Stre24.RData") ##updated
 serotype.58 <- vaccine_output_dt
 
-load("outputs/fulloutput_chunks/resultsStre20.RData")
+load("outputs/fulloutput_chunks/Stre27.RData") ## updated
 improv.7 <- vaccine_output_dt
 
-load("outputs/fulloutput_chunks/resultsStre23.RData")
+load("outputs/fulloutput_chunks/Stre25.RData") ## updated
 serotype.58.eld <- vaccine_output_dt
 
-load("outputs/fulloutput_chunks/resultsStre24.RData")
+load("outputs/fulloutput_chunks/Stre28.RData") ## updated
 improv.7.eld <- vaccine_output_dt
 
-load("outputs/fulloutput_chunks/resultsStre25.RData")
+load("outputs/fulloutput_chunks/Stre26.RData") ## updated
 current <- vaccine_output_dt
 
-load("outputs/fulloutput_chunks/resultsStre34.RData")
+load("outputs/fulloutput_chunks/Stre33.RData") ## updated
 serotype.27 <- vaccine_output_dt
 
-load("outputs/fulloutput_chunks/resultsStre35.RData")
+load("outputs/fulloutput_chunks/Stre35.RData") ## updated
 improv.5 <- vaccine_output_dt
 
-load("outputs/fulloutput_chunks/resultsStre36.RData")
+load("outputs/fulloutput_chunks/Stre34.RData") ## updated
 serotype.27.eld <- vaccine_output_dt
 
-load("outputs/fulloutput_chunks/resultsStre37.RData")
+load("outputs/fulloutput_chunks/Stre36.RData") ## updated
 improv.5.eld <- vaccine_output_dt
 
 rm(vaccine_output_dt)
@@ -446,32 +446,32 @@ spec.syndrome.strep <- function(dt){
     summarise(Mean_avert_costing = mean(who_region_cost_A, na.rm=TRUE),
               LOWUI_avert_costing = quantile(who_region_cost_A,0.025, na.rm = TRUE),
               HIGHUI_avert_costing = quantile(who_region_cost_A,0.975, na.rm = TRUE),
-              Mean_total_costing = mean(who_region_cost_T, na.rm=TRUE),
+              total_costing = mean(who_region_cost_T, na.rm=TRUE),
               LOWUI_total_costing = quantile(who_region_cost_T,0.025, na.rm = TRUE),
               HIGHUI_total_costing = quantile(who_region_cost_T,0.975, na.rm = TRUE),
               Mean_avert_days = mean(who_region_days_A, na.rm=TRUE),
               LOWUI_avert_days = quantile(who_region_days_A,0.025, na.rm = TRUE),
               HIGHUI_avert_days = quantile(who_region_days_A,0.975, na.rm = TRUE),
-              Mean_total_days = mean(who_region_days_T, na.rm=TRUE),
+              total_days = mean(who_region_days_T, na.rm=TRUE),
               LOWUI_total_days = quantile(who_region_days_T,0.025, na.rm = TRUE),
               HIGHUI_total_days = quantile(who_region_days_T,0.975, na.rm = TRUE)) %>%
     mutate(across(Mean_avert_costing:HIGHUI_total_days,
                   ~ format(., big.mark = ",", scientific = F)))%>%
-    mutate( mean_ci_total_cost = str_c(Mean_total_costing, " ( ", LOWUI_total_costing, "-",
+    mutate( mean_ci_total_cost = str_c(total_costing, " ( ", LOWUI_total_costing, "-",
                                        HIGHUI_total_costing," ) "),
             mean_ci_averted_cost = str_c(Mean_avert_costing, " ( ", LOWUI_avert_costing, "-",
                                          HIGHUI_avert_costing," ) "),
-            mean_ci_total_days = str_c(Mean_total_days, " ( ", LOWUI_total_days, "-",
+            mean_ci_total_days = str_c(total_days, " ( ", LOWUI_total_days, "-",
                                        HIGHUI_total_days," ) "),
             mean_ci_averted_days = str_c(Mean_avert_days, " ( ", LOWUI_avert_days, "-",
                                          HIGHUI_avert_days," ) "))%>%
     as.data.table()
   
   hospital_c <- hospital_c[ , -c("Mean_avert_costing",  "LOWUI_avert_costing",
-                                 "HIGHUI_avert_costing", "Mean_total_costing" ,
+                                 "HIGHUI_avert_costing", "total_costing" ,
                                  "LOWUI_total_costing" , "HIGHUI_total_costing" ,
                                  "Mean_avert_days",  "LOWUI_avert_days",
-                                 "HIGHUI_avert_days", "Mean_total_days" ,
+                                 "HIGHUI_avert_days", "total_days" ,
                                  "LOWUI_total_days" , "HIGHUI_total_days" )]
   hospital_c <- dcast(hospital_c, Pathogen ~ WHO.Region, value.var = c("mean_ci_total_cost",
                                                                        "mean_ci_averted_cost",
@@ -495,32 +495,32 @@ spec.syndrome.global.strep <- function(dt){
     summarise(Mean_avert_costing = mean(who_region_cost_A, na.rm=TRUE),
               LOWUI_avert_costing = quantile(who_region_cost_A,0.025, na.rm = TRUE),
               HIGHUI_avert_costing = quantile(who_region_cost_A,0.975, na.rm = TRUE),
-              Mean_total_costing = mean(who_region_cost_T, na.rm=TRUE),
+              total_costing = mean(who_region_cost_T, na.rm=TRUE),
               LOWUI_total_costing = quantile(who_region_cost_T,0.025, na.rm = TRUE),
               HIGHUI_total_costing = quantile(who_region_cost_T,0.975, na.rm = TRUE),
               Mean_avert_days = mean(who_region_days_A, na.rm=TRUE),
               LOWUI_avert_days = quantile(who_region_days_A,0.025, na.rm = TRUE),
               HIGHUI_avert_days = quantile(who_region_days_A,0.975, na.rm = TRUE),
-              Mean_total_days = mean(who_region_days_T, na.rm=TRUE),
+              total_days = mean(who_region_days_T, na.rm=TRUE),
               LOWUI_total_days = quantile(who_region_days_T,0.025, na.rm = TRUE),
               HIGHUI_total_days = quantile(who_region_days_T,0.975, na.rm = TRUE)) %>%
     mutate(across(Mean_avert_costing:HIGHUI_total_days,
                   ~ format(., big.mark = ",", scientific = F)))%>%
-    mutate( mean_ci_total_cost = str_c(Mean_total_costing, " ( ", LOWUI_total_costing, "-",
+    mutate( mean_ci_total_cost = str_c(total_costing, " ( ", LOWUI_total_costing, "-",
                                        HIGHUI_total_costing," ) "),
             mean_ci_averted_cost = str_c(Mean_avert_costing, " ( ", LOWUI_avert_costing, "-",
                                          HIGHUI_avert_costing," ) "),
-            mean_ci_total_days = str_c(Mean_total_days, " ( ", LOWUI_total_days, "-",
+            mean_ci_total_days = str_c(total_days, " ( ", LOWUI_total_days, "-",
                                        HIGHUI_total_days," ) "),
             mean_ci_averted_days = str_c(Mean_avert_days, " ( ", LOWUI_avert_days, "-",
                                          HIGHUI_avert_days," ) "))%>%
     as.data.table()
   
   hospital_c <- hospital_c[ , -c("Mean_avert_costing",  "LOWUI_avert_costing",
-                                 "HIGHUI_avert_costing", "Mean_total_costing" ,
+                                 "HIGHUI_avert_costing", "total_costing" ,
                                  "LOWUI_total_costing" , "HIGHUI_total_costing" ,
                                  "Mean_avert_days",  "LOWUI_avert_days",
-                                 "HIGHUI_avert_days", "Mean_total_days" ,
+                                 "HIGHUI_avert_days", "total_days" ,
                                  "LOWUI_total_days" , "HIGHUI_total_days" )]
   
   
@@ -652,10 +652,10 @@ write.csv(strep, file="outputs/END_hospital_costs_outputs_strep.csv")
 
 ############# Hib #################################
 
-load("outputs/fulloutput_chunks/resultsHaem28.RData")
+load("outputs/fulloutput_chunks/Haem29.RData")
 Hib_93 <- vaccine_output_dt
 
-load("outputs/fulloutput_chunks/resultsHaem29.RData")
+load("outputs/fulloutput_chunks/Haem32.RData")
 Hib_69 <- vaccine_output_dt
 rm(vaccine_output_dt)
 
@@ -800,18 +800,18 @@ Hib <- Hib[, lapply(.SD, sum, na.rm=TRUE),
                    by = c("Pathogen.x",
                           "Infectious.syndrome"
                    ),
-                   .SDcols=c("mean_total_AFRO",
-                             "mean_total_EMRO"  ,
-                             "mean_total_EURO" ,
-                             "mean_total_AMRO",
-                             "mean_total_SEARO"  ,
-                             "mean_total_WPRO"  ,
-                             "mean_averted_AFRO" ,
-                             "mean_averted_EMRO",     
-                             "mean_averted_EURO" ,
-                             "mean_averted_AMRO",
-                             "mean_averted_SEARO" ,
-                             "mean_averted_WPRO" ,
+                   .SDcols=c("total_AFRO",
+                             "total_EMRO"  ,
+                             "total_EURO" ,
+                             "total_AMRO",
+                             "total_SEARO"  ,
+                             "total_WPRO"  ,
+                             "averted_AFRO" ,
+                             "averted_EMRO",     
+                             "averted_EURO" ,
+                             "averted_AMRO",
+                             "averted_SEARO" ,
+                             "averted_WPRO" ,
                              "averted",
                              "total")]
 
@@ -822,18 +822,18 @@ psuedo.1 <- psuedo.1[Infectious.syndrome=="LRI and thorax infections"|
                        Infectious.syndrome=="BSI"]
 psuedo.1 <- psuedo.1[, lapply(.SD, sum, na.rm=TRUE),
            by = c("Pathogen.x"),
-           .SDcols=c("mean_total_AFRO",
-                     "mean_total_EMRO"  ,
-                     "mean_total_EURO" ,
-                     "mean_total_AMRO",
-                     "mean_total_SEARO"  ,
-                     "mean_total_WPRO"  ,
-                     "mean_averted_AFRO" ,
-                     "mean_averted_EMRO",     
-                     "mean_averted_EURO" ,
-                     "mean_averted_AMRO",
-                     "mean_averted_SEARO" ,
-                     "mean_averted_WPRO" ,
+           .SDcols=c("total_AFRO",
+                     "total_EMRO"  ,
+                     "total_EURO" ,
+                     "total_AMRO",
+                     "total_SEARO"  ,
+                     "total_WPRO"  ,
+                     "averted_AFRO" ,
+                     "averted_EMRO",     
+                     "averted_EURO" ,
+                     "averted_AMRO",
+                     "averted_SEARO" ,
+                     "averted_WPRO" ,
                      "averted",
                      "total")]
 psuedo.1[ , Infectious.syndrome:="BSI & LRI and thorax infections"]
@@ -844,18 +844,18 @@ psuedo.2 <- psuedo.2[Infectious.syndrome=="LRI and thorax infections"|
                        Infectious.syndrome=="BSI"]
 psuedo.2 <- psuedo.2[, lapply(.SD, sum, na.rm=TRUE),
                      by = c("Pathogen.x"),
-                     .SDcols=c("mean_total_AFRO",
-                                "mean_total_EMRO"  ,
-                                "mean_total_EURO" ,
-                                "mean_total_AMRO",
-                                "mean_total_SEARO"  ,
-                                "mean_total_WPRO"  ,
-                                "mean_averted_AFRO" ,
-                                "mean_averted_EMRO",     
-                                "mean_averted_EURO" ,
-                                "mean_averted_AMRO",
-                                "mean_averted_SEARO" ,
-                                "mean_averted_WPRO" ,
+                     .SDcols=c("total_AFRO",
+                                "total_EMRO"  ,
+                                "total_EURO" ,
+                                "total_AMRO",
+                                "total_SEARO"  ,
+                                "total_WPRO"  ,
+                                "averted_AFRO" ,
+                                "averted_EMRO",     
+                                "averted_EURO" ,
+                                "averted_AMRO",
+                                "averted_SEARO" ,
+                                "averted_WPRO" ,
                                 "averted",
                                 "total")]
 psuedo.2[ , Infectious.syndrome:="BSI & LRI and thorax infections"]
@@ -872,18 +872,18 @@ strep.current <- strep.current[Infectious.syndrome=="BSI"|
 
 strep.current <- strep.current[, lapply(.SD, sum, na.rm=TRUE),
                      by = c("Pathogen.x"),
-                     .SDcols=c("mean_total_AFRO",
-                               "mean_total_EMRO"  ,
-                               "mean_total_EURO" ,
-                               "mean_total_AMRO",
-                               "mean_total_SEARO"  ,
-                               "mean_total_WPRO"  ,
-                               "mean_averted_AFRO" ,
-                               "mean_averted_EMRO",     
-                               "mean_averted_EURO" ,
-                               "mean_averted_AMRO",
-                               "mean_averted_SEARO" ,
-                               "mean_averted_WPRO" ,
+                     .SDcols=c("total_AFRO",
+                               "total_EMRO"  ,
+                               "total_EURO" ,
+                               "total_AMRO",
+                               "total_SEARO"  ,
+                               "total_WPRO"  ,
+                               "averted_AFRO" ,
+                               "averted_EMRO",     
+                               "averted_EURO" ,
+                               "averted_AMRO",
+                               "averted_SEARO" ,
+                               "averted_WPRO" ,
                                "averted",
                                "total")]
 strep.current[ , Infectious.syndrome:="BSI, CNS infections, Cardiac infections, LRI"]
@@ -900,18 +900,18 @@ strep.improv.eld  <- strep.improv.eld[Infectious.syndrome=="BSI"|
 
 strep.improv.eld  <- strep.improv.eld[, lapply(.SD, sum, na.rm=TRUE),
                                by = c("Pathogen.x"),
-                               .SDcols=c("mean_total_AFRO",
-                                         "mean_total_EMRO"  ,
-                                         "mean_total_EURO" ,
-                                         "mean_total_AMRO",
-                                         "mean_total_SEARO"  ,
-                                         "mean_total_WPRO"  ,
-                                         "mean_averted_AFRO" ,
-                                         "mean_averted_EMRO",     
-                                         "mean_averted_EURO" ,
-                                         "mean_averted_AMRO",
-                                         "mean_averted_SEARO" ,
-                                         "mean_averted_WPRO" ,
+                               .SDcols=c("total_AFRO",
+                                         "total_EMRO"  ,
+                                         "total_EURO" ,
+                                         "total_AMRO",
+                                         "total_SEARO"  ,
+                                         "total_WPRO"  ,
+                                         "averted_AFRO" ,
+                                         "averted_EMRO",     
+                                         "averted_EURO" ,
+                                         "averted_AMRO",
+                                         "averted_SEARO" ,
+                                         "averted_WPRO" ,
                                          "averted",
                                          "total")]
 strep.improv.eld[ , Infectious.syndrome:="BSI, CNS infections, Cardiac infections, LRI"]
@@ -929,18 +929,18 @@ strep.serotype  <- strep.serotype[Infectious.syndrome=="BSI"|
 
 strep.serotype  <- strep.serotype[, lapply(.SD, sum, na.rm=TRUE),
                                       by = c("Pathogen.x"),
-                                      .SDcols=c("mean_total_AFRO",
-                                                "mean_total_EMRO"  ,
-                                                "mean_total_EURO" ,
-                                                "mean_total_AMRO",
-                                                "mean_total_SEARO"  ,
-                                                "mean_total_WPRO"  ,
-                                                "mean_averted_AFRO" ,
-                                                "mean_averted_EMRO",     
-                                                "mean_averted_EURO" ,
-                                                "mean_averted_AMRO",
-                                                "mean_averted_SEARO" ,
-                                                "mean_averted_WPRO" ,
+                                      .SDcols=c("total_AFRO",
+                                                "total_EMRO"  ,
+                                                "total_EURO" ,
+                                                "total_AMRO",
+                                                "total_SEARO"  ,
+                                                "total_WPRO"  ,
+                                                "averted_AFRO" ,
+                                                "averted_EMRO",     
+                                                "averted_EURO" ,
+                                                "averted_AMRO",
+                                                "averted_SEARO" ,
+                                                "averted_WPRO" ,
                                                 "averted",
                                                 "total")]
 strep.serotype[ , Infectious.syndrome:="BSI, CNS infections, Cardiac infections, LRI"]
@@ -958,18 +958,18 @@ strep.serotype.eld  <- strep.serotype.eld[Infectious.syndrome=="BSI"|
 
 strep.serotype.eld  <- strep.serotype.eld[, lapply(.SD, sum, na.rm=TRUE),
                                   by = c("Pathogen.x"),
-                                  .SDcols=c("mean_total_AFRO",
-                                            "mean_total_EMRO"  ,
-                                            "mean_total_EURO" ,
-                                            "mean_total_AMRO",
-                                            "mean_total_SEARO"  ,
-                                            "mean_total_WPRO"  ,
-                                            "mean_averted_AFRO" ,
-                                            "mean_averted_EMRO",     
-                                            "mean_averted_EURO" ,
-                                            "mean_averted_AMRO",
-                                            "mean_averted_SEARO" ,
-                                            "mean_averted_WPRO" ,
+                                  .SDcols=c("total_AFRO",
+                                            "total_EMRO"  ,
+                                            "total_EURO" ,
+                                            "total_AMRO",
+                                            "total_SEARO"  ,
+                                            "total_WPRO"  ,
+                                            "averted_AFRO" ,
+                                            "averted_EMRO",     
+                                            "averted_EURO" ,
+                                            "averted_AMRO",
+                                            "averted_SEARO" ,
+                                            "averted_WPRO" ,
                                             "averted",
                                             "total")]
 strep.serotype.eld[ , Infectious.syndrome:="BSI, CNS infections, Cardiac infections, LRI"]
@@ -989,18 +989,18 @@ main_scenarios_prod <- merge(prod.loss, id_NN, by=c("vaccine_id","Infectious.syn
 
 main_scenarios_prod <- main_scenarios_prod[ ,c("Pathogen.x"   ,
                                                "Infectious.syndrome",
-                                               "mean_total_AFRO",
-                                               "mean_total_EMRO" ,
-                                               "mean_total_EURO" ,  
-                                               "mean_total_AMRO"  ,
-                                               "mean_total_SEARO"  ,
-                                               "mean_total_WPRO"   ,
-                                               "mean_averted_AFRO" ,
-                                               "mean_averted_EMRO" ,
-                                               "mean_averted_EURO" ,
-                                               "mean_averted_AMRO" ,
-                                               "mean_averted_SEARO",
-                                               "mean_averted_WPRO" ,
+                                               "total_AFRO",
+                                               "total_EMRO" ,
+                                               "total_EURO" ,  
+                                               "total_AMRO"  ,
+                                               "total_SEARO"  ,
+                                               "total_WPRO"   ,
+                                               "averted_AFRO" ,
+                                               "averted_EMRO" ,
+                                               "averted_EURO" ,
+                                               "averted_AMRO" ,
+                                               "averted_SEARO",
+                                               "averted_WPRO" ,
                                                "averted"           , 
                                                "total"         ,
                                                "Matcher_NN")]
@@ -1031,13 +1031,13 @@ final_table <- final_table[ ,c("Matcher_NN",
                              "mean_ci_averted_cost_EMRO"      ,       "mean_ci_averted_cost_EURO"     ,       
                             "mean_ci_averted_cost_SEARO"       ,     "mean_ci_averted_cost_AMRO"       ,     
                             "mean_ci_averted_cost_WPRO"         ,    "mean_ci_averted_cost" ,                
-                            "mean_total_AFRO"                    ,   "mean_total_EMRO"       ,               
-                             "mean_total_EURO"        ,               "mean_total_SEARO"      ,               
-                            "mean_total_AMRO"          ,             "mean_total_WPRO"         ,             
-                             "total"               ,             "mean_averted_AFRO"       ,             
-                             "mean_averted_EMRO"         ,            "mean_averted_EURO"        ,            
-                             "mean_averted_SEARO"         ,           "mean_averted_AMRO"         ,           
-                             "mean_averted_WPRO"           ,          "averted"                ,         
+                            "total_AFRO"                    ,   "total_EMRO"       ,               
+                             "total_EURO"        ,               "total_SEARO"      ,               
+                            "total_AMRO"          ,             "total_WPRO"         ,             
+                             "total"               ,             "averted_AFRO"       ,             
+                             "averted_EMRO"         ,            "averted_EURO"        ,            
+                             "averted_SEARO"         ,           "averted_AMRO"         ,           
+                             "averted_WPRO"           ,          "averted"                ,         
                              "mean_ci_total_days_AFRO"      ,         "mean_ci_total_days_EMRO"    ,          
                              "mean_ci_total_days_EURO"       ,        "mean_ci_total_days_SEARO"     ,        
                              "mean_ci_total_days_AMRO"        ,       "mean_ci_total_days_WPRO"       ,       
