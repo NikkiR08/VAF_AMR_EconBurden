@@ -36,6 +36,9 @@ keep_vac <- c(
 , "Shigella_0.6_0.7_5 years_All_6 months"  ) 
 ### need to specify different ones for productivity as didn't group
 ## vaccine scenarios like had done for 
+
+## selecting ones that have the theoretical biggest impact (e.g. most age groups/syndromes)
+
 keep_vac_prod <- c(               
   "Haemophilus influenzae type B_0.93_0.9_5 years_All_6, 10, 14 weeks"  
   ,"Haemophilus influenzae type B_0.69_0.9_5 years_All_6, 10, 14 weeks" 
@@ -56,7 +59,7 @@ keep_vac_prod <- c(
 
 ##### 
 
-## selecting ones that have the theoretical biggest impact (e.g. most age groups/syndromes)
+
 
 cleaning.dt <- function(hospital_c){
   global_hospital <- hospital_c[hospital_c$vaccine_id %in% keep_vac]
@@ -408,7 +411,7 @@ load("outputs/working_life_years_lost.Rdata")
 
 output_hc <- as.data.table(output_hc)
 ### getting one vaccine/one DRI per group
-output_hc <- cleaning.dt(output_hc)
+output_hc <- cleaning.dt.prod(output_hc)
 
 regional_prod_path  <-output_hc[, lapply(.SD, sum, na.rm=TRUE),
                                   by = c("Pathogen",
