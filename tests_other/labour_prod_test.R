@@ -7,6 +7,8 @@ require(data.table)
 require(janitor)
 require(reshape2)
 
+
+##################### checking functions #############################
 # ### LOADING IN DATA AND PACKAGES FROM DATA MANIP when testing
 ##################################**** BY INFECTIOUS SYNDROME *****################
 ################# required case & death data
@@ -303,3 +305,48 @@ dr <-  1/(1+0.03)^(1:length(x))
 x <- x*dr
 sum(x)*a
 ### matches
+
+######### checking outputs ##################
+
+## readin outputs (created from plot creation script)
+load("outputs/prod_additional4plots_sc2.RData")
+
+test_outputs <- all.prod.methods[1,]
+
+
+## read in unit costs and deaths 
+load("data_inputs/epi_inputs_all.RData") ## cases
+wage_region <- as.data.table(read.csv("data_inputs/regional_labour.csv"))
+
+cases <- all_data[vaccine== "Acinetobacter baumannii - all"      &                 
+                  Efficacy== 0.7  &                     
+                Coverage==0.7      &
+                  Duration== "5 years"    &                       
+                  DP==       "All" &
+                  target_population== "All age groups"  &
+                  WHO.Region=="African Region"  &
+                  Antibiotic.class=="Carbapenems" &
+                  (Age.group=="15 to 19" |
+                     Age.group=="20 to 24"     |
+                     Age.group== "25 to 29"    |
+                     Age.group== "30 to 34"       |
+                     Age.group== "35 to 39"    |
+                     Age.group=="40 to 44"     | 
+                     Age.group== "45 to 49"     |
+                     Age.group=="50 to 54"     |
+                     Age.group=="55 to 59"     |
+                     Age.group== "60 to 64"  ) &
+                  Infectious.syndrome=="Bacterial skin infections"]      
+
+sum_deaths <- sum(cases$deaths_resistant)
+
+## AFRO sc1 - $154 , sc2 = $297
+154/297
+
+test_outputs$sc1_total/test_outputs$sc2_total
+
+## difference is the same
+
+sum_deaths*6*154
+test_outputs$fc_total
+## its a match
