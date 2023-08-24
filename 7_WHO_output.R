@@ -760,7 +760,7 @@ main_scenarios <- merge(main_scenarios, main_scenarios_global, by=c("vaccine_id"
 rm(main_scenarios_global)
 
 ### match with id template
-id_NN <- read.csv("outputs/id_template_outputs.csv") ## these are just for the ones that didn't need adjustment (e.g. not pseudo)
+id_NN <- read.csv("data_inputs/id_template_outputs.csv") ## these are just for the ones that didn't need adjustment (e.g. not pseudo)
 main_scenarios <- merge(main_scenarios, id_NN, by=c("vaccine_id","Infectious.syndrome"))
 
 ### bind with the other scenarios
