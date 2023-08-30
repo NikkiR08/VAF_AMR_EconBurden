@@ -59,8 +59,6 @@ keep_vac_prod <- c(
 
 ##### 
 
-
-
 cleaning.dt <- function(hospital_c){
   global_hospital <- hospital_c[hospital_c$vaccine_id %in% keep_vac]
   
@@ -131,9 +129,15 @@ classrank <- (hospital_c[, lapply(.SD, sum, na.rm=TRUE),
                                 "avert_cost_med")])
 
 hospital_c <- setorder(hospital_c, cost_med)
+
+## get pathogen in order of cost for plots 
+order.test <- hospital_c[, lapply(.SD, sum, na.rm=TRUE),
+                                       by = c("Pathogen"),
+                                       .SDcols=c("cost_med")]
+order.test <- order.test[order(order.test$cost_med,decreasing = TRUE)] 
+
 hospital_c$Pathogen <- factor(hospital_c$Pathogen , 
-                                   levels = 
-                                     unique(hospital_c$Pathogen[order(hospital_c$cost_med)]))
+                                   levels = order.test$Pathogen)
 
 path <- hospital_c$Pathogen
 
@@ -673,16 +677,25 @@ regional_hospital_totals[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
 regional_hospital_totals[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
                          days_hi :=0]
 
+## updating hib and strep vaccine ids to match regional prod death
+prod_deaths[Pathogen=="Haemophilus influenzae",
+                        vaccine_id := "Haemophilus influenzae type B_both_0.9_5 years_All_6, 10, 14 weeks"]
+
+prod_deaths[Pathogen=="Streptococcus pneumoniae",
+                        vaccine_id := "Streptococcus pneumoniae - Improved_both_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6 weeks & elderly age group"]
+
 regional_prod_deaths <- prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
                                     by = c(".id","Pathogen","vaccine_id"),
                                     .SDcols=c("sc1_total","sc2_total",
                                               "sc1_averted","sc2_averted")]
+
 
 ### merge together
 all.dt <- merge(regional_prod_deaths, regional_hospital_totals, by.x=c(".id","Pathogen","vaccine_id"),
                 by.y=c("WHO.Region","Pathogen","vaccine_id"))
 ### !! note that the total costing set to 0 for ETEC is just because all e.coli is already costed (included diarrheoa)
 ## in the EXPEC - so applicable to both but removed to remove double counting
+
 
 ## sum across vaccines for pathogens
 all.dt <- all.dt[, lapply(.SD, sum, na.rm=TRUE),
@@ -915,8 +928,7 @@ total.cost.plot <- function (all.dt){
           b = 5
         )
       )
-      , axis.title.y = element_blank()
-      , axis.title.x = element_blank()
+     
       , legend.position = c(0.20, 0.98)
       , legend.title = element_blank()
       , plot.title = element_text(
@@ -940,7 +952,9 @@ total.cost.plot <- function (all.dt){
           size = 8
         )
         , nrow = 1) )+
-  theme(panel.grid.major.y =element_line(colour="black"))
+  theme(panel.grid.major.y =element_line(colour="black"))+
+    xlab("Cost (USD)")+
+    ylab("Microbe")
 }
 
 
@@ -1128,9 +1142,9 @@ output_hc <- as.data.table(output_hc)
 output_hc <- cleaning.dt(output_hc)
 
 regional_prod_path  <-output_hc[, lapply(.SD, sum, na.rm=TRUE),
-                                  by = c("Pathogen",
-                                         ".id"),
-                                  .SDcols=c("averted_HC")]
+                                by = c("Pathogen",
+                                       ".id"),
+                                .SDcols=c("averted_HC")]
 regional_prod_path[.id=="PAHO",.id := "AMRO"]
 
 all.dt2 <- merge(regional_prod_path,all.dt, by=c("Pathogen",".id"))
@@ -1258,3 +1272,4 @@ em <- pathrank$EMRO
 eu <- pathrank$EURO
 sea <- pathrank$SEARO
 wp <- pathrank$WPRO
+
