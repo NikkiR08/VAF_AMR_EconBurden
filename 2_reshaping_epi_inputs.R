@@ -10,6 +10,11 @@ library(dplyr)
 cases <- read.csv("data_inputs/case_deaths_impact_by_vaccine.csv")
 cases <- as.data.table(cases)
 
+### some are not matched to any vaccines - it gets dropped later on in "3_combining..." script
+x <- subset(cases,is.na(cases$Efficacy))
+unique(x$Infectious.syndrome)
+write.csv(x, file="outputs/non-matched-case-data.csv")
+
 cases[ , hflag := "YES"]
 cases[VO==VC, hflag := "NO"]
 
