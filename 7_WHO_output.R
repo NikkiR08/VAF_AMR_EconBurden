@@ -270,9 +270,9 @@ rm(hospital_cost_l)
 #### psuedo #####
 ##### read in data
 
-load( "outputs/fulloutput_chunks/Pseu14.RData")
+load( "outputs/fulloutput_chunks/Pseu24.RData")
 psuedo1 <- vaccine_output_dt
-load("outputs/fulloutput_chunks/Pseu15.RData")
+load("outputs/fulloutput_chunks/Pseu25.RData")
 psuedo2 <- vaccine_output_dt
 rm(vaccine_output_dt)
 
@@ -404,31 +404,31 @@ rm(psuedo)
  ## "BSI", "CNS infections", "Cardiac infections" and "LRI and thorax infections"
 
 ## load files ###!!! this might need redoing if order of runs changes - check 1st row after loading & before assigning
-load("outputs/fulloutput_chunks/Stre24.RData") ##updated
+load("outputs/fulloutput_chunks/Stre37.RData") ##updated
 serotype.58 <- vaccine_output_dt
 
-load("outputs/fulloutput_chunks/Stre27.RData") ## updated
+load("outputs/fulloutput_chunks/Stre33.RData") ## updated
 improv.7 <- vaccine_output_dt
 
-load("outputs/fulloutput_chunks/Stre25.RData") ## updated
+load("outputs/fulloutput_chunks/Stre38.RData") ## updated
 serotype.58.eld <- vaccine_output_dt
 
-load("outputs/fulloutput_chunks/Stre28.RData") ## updated
+load("outputs/fulloutput_chunks/Stre34.RData") ## updated
 improv.7.eld <- vaccine_output_dt
 
-load("outputs/fulloutput_chunks/Stre26.RData") ## updated
+load("outputs/fulloutput_chunks/Stre39.RData") ## updated
 current <- vaccine_output_dt
 
-load("outputs/fulloutput_chunks/Stre33.RData") ## updated
+load("outputs/fulloutput_chunks/Stre35.RData") ## updated
 serotype.27 <- vaccine_output_dt
 
-load("outputs/fulloutput_chunks/Stre35.RData") ## updated
+load("outputs/fulloutput_chunks/Stre31.RData") ## updated
 improv.5 <- vaccine_output_dt
 
-load("outputs/fulloutput_chunks/Stre34.RData") ## updated
+load("outputs/fulloutput_chunks/Stre36.RData") ## updated
 serotype.27.eld <- vaccine_output_dt
 
-load("outputs/fulloutput_chunks/Stre36.RData") ## updated
+load("outputs/fulloutput_chunks/Stre32.RData") ## updated
 improv.5.eld <- vaccine_output_dt
 
 rm(vaccine_output_dt)
@@ -652,10 +652,10 @@ write.csv(strep, file="outputs/END_hospital_costs_outputs_strep.csv")
 
 ############# Hib #################################
 
-load("outputs/fulloutput_chunks/Haem29.RData")
+load("outputs/fulloutput_chunks/Haem15.RData")
 Hib_93 <- vaccine_output_dt
 
-load("outputs/fulloutput_chunks/Haem32.RData")
+load("outputs/fulloutput_chunks/Haem16.RData")
 Hib_69 <- vaccine_output_dt
 rm(vaccine_output_dt)
 
@@ -984,7 +984,7 @@ other.prod <- rbindlist(other.prod, use.names=TRUE)
 
 #### create big productivity dataset
 ### match with id template
-id_NN <- read.csv("outputs/id_template_outputs.csv")
+id_NN <- read.csv("data_inputs/id_template_outputs.csv")
 main_scenarios_prod <- merge(prod.loss, id_NN, by=c("vaccine_id","Infectious.syndrome"))
 
 main_scenarios_prod <- main_scenarios_prod[ ,c("Pathogen.x"   ,
@@ -1016,7 +1016,7 @@ final_table <- merge(hospital,productivity, by="Matcher_NN")
 final_table <- as.data.table(final_table)
 
 #### read in template
-template_outputs_GHO <- read_excel("outputs/template_outputs_GHO.xlsx")
+template_outputs_GHO <- read.csv("data_inputs/template_outputs.csv")
 
 
 ## get correct column order 
@@ -1048,3 +1048,14 @@ final_table <- final_table[ ,c("Matcher_NN",
 
 
 write.csv(final_table, file="outputs/final_table_GHO.csv")
+
+#### get in same table as previous results ###
+
+## results 
+results <- read.csv("outputs/final_table_GHO.csv")
+outputs <- read.csv("data_inputs/template_outputs.csv")
+
+## together
+outputs<- merge(outputs,results,by="Matcher_NN",all=TRUE)
+
+write.csv(outputs, file="outputs/WHO_results_economic.csv")
