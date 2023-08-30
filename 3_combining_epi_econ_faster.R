@@ -19,13 +19,12 @@ load("data_inputs/epi_inputs_all.RData") ## cases
 cases <- all_data
 rm(all_data)
 
-### add up over age groups to speed up
+### add up over age groups and origin to speed up
 cases <- cases %>%
   group_by(vaccine,Efficacy,Coverage,
   Duration,DP,target_population,WHO.Region,
   ISO3, Country,
-  Infectious.syndrome, Origin,
-  Pathogen, Antibiotic.class) %>%
+  Infectious.syndrome, Pathogen, Antibiotic.class) %>%
   summarise(cases_resistant=sum(cases_resistant),
             deaths_resistant=sum(deaths_resistant) ,
             vaccine_avertable_cases_resistance=sum(vaccine_avertable_cases_resistance), 
@@ -143,7 +142,7 @@ cases_averted <- cases[,c( "vaccine_avertable_cases_resistance",
                           "gram.stain",                         
                           "syndrome" ,                           
                           "class","iso3c","Pathogen" ,"WHO.Region",
-                          "vaccine_id","Origin")]   
+                          "vaccine_id")]   
 rm(cases)
 gc()
 
@@ -189,14 +188,14 @@ load("outputs/sample_whoc.RData")
 load("outputs/sample_whoc_region.RData")
 
 vaccines <- unique(cases_averted$vaccine_id)
-vaccines <- vaccines[ vaccines != '_NA_NA___']
+vaccines <- vaccines[ vaccines != '_NA_NA___'] ### !!! dropping those with no vaccine info
 nvac <- round(length(vaccines))
 nvac
 
 cases_averted_all <- cases_averted
 
 ### added order by name so then less by hand updating needed in table creation 
-sort(vaccines)
+vaccines <- sort(vaccines)
 
 for (i in 1:nvac){  
   
@@ -368,7 +367,7 @@ for (i in 1:nvac){
                                    "class","gram.stain","WHO.Region" ,  "run", "cases_resistant",
                                    "vaccine_avertable_cases_resistance","Antibiotic.class","Infectious.syndrome" ,              
                                    "Pathogen","prop_hospitalised", "cases_averted_hospitalised","cases_hospitalised",
-                                   "vaccine_id","Origin")]
+                                   "vaccine_id")]
       
       ### check
       test2 <- all_costed[is.na(whoc.region)] ## should be 0 obs
@@ -422,7 +421,7 @@ for (i in 1:nvac){
                                       "cases_averted_hospitalised", "cases_hospitalised",
                                       "los.cost" , "los.DRI",
                                       "avertable_cost_cases","avertable_days_cases", 
-                                      "cost_cases", "days_cases","vaccine_id","Origin",
+                                      "cost_cases", "days_cases","vaccine_id",
                                       "iso3c")] 
       
       
