@@ -155,6 +155,7 @@ combos <- unique(cases[,c('Infectious.syndrome',
 ## keep salmonella ones
 salmonella <- combos[grepl('Salmonella', combos$Pathogen), ]
 
+##### creating frame of data to input ###
 load("data_inputs/lit_review/los_output_cc.RData")
 ### there's some duplication, remove 
 los.output.cc <- los.output.cc[!duplicated(los.output.cc), ]
@@ -206,7 +207,8 @@ sample.DRI.other <- rbindlist(los.cc.DRI.extra, idcol=TRUE)
 
 setnames(sample.DRI.other,".id","run")
 sample.DRI.other[ , TE.final.rep := TE.final] # makes it easier to check
-sample.DRI.other[ , TE.final.rep := rtruncnorm(1, a=lowerlimsamp, b=upperlimsamp.dri, mean=TE.final, sd=seTE.final)]
+### lognormal distribution for salmonella DRI:
+sample.DRI.other[ , TE.final.rep := exp(rtruncnorm(1, a=lowerlimsamp, b=upperlimsamp.dri, mean=TE.final, sd=seTE.final))]
 sample.DRI.other[ , TE.final := TE.final.rep] 
 sample.DRI.other <- sample.DRI.other[ , -c("seTE.final","TE.final.rep")]
 save(sample.DRI.other, file="outputs/sample_dri_other_trunc.RData")
@@ -292,7 +294,7 @@ sample.AMR.other[ , TE.final.rep := TE.final] # makes it easier to check
 #                                            a = lowerlimsamp, b=upperlimsamp.amrs)]
 ### for some reason data table version not working any more so using loop
 
-for (i in 1:length(sample.AMR.other)){
+for (i in 1:nrow(sample.AMR.other)){
   shape <- sample.AMR.other[i,TE.final]
   scale <- sample.AMR.other[i,seTE.final]
   x <- rtrunc(n = 1, spec = "gamma", shape = shape, 
@@ -441,7 +443,7 @@ DRI.temp <- AMR.noS.p[ ,c("group_id_c"  ,"run" ,
 
 DRI.all <- rbind(DRI.all, DRI.temp, fill=TRUE)
 
-### still have duplicates for those who are in multiple ways of calculating  DRI for that exposure group
+# ### still have duplicates for those who are in multiple ways of calculating  DRI for that exposure group
 x<- DRI.all[ , -c("los.DRI")]
 x <- x[ ,-c("DRI.flag")]
 x <- x[,list(Count=.N),names(x)]
@@ -461,14 +463,13 @@ DRI.all.clean <- DRI.all.clean[Count==1 |(Count>1 & DRI.flag==1)]
 ## create a new run id for each group id so as to not double count runs as cases/costs
 DRI.all.clean <- DRI.all.clean[, run := sequence(.N), by = c("group_id_c")]
 
-## remove unnecessary rows and replace old DRI.all to save
+## remove unnecessary columns and replace old DRI.all to save
 DRI.all.clean <- DRI.all.clean[ , -c("DRI.flag" ,  "Count"  )]
 DRI.all <- DRI.all.clean
 
 x<- DRI.all[ , -c("los.DRI")]
 x <- x[,list(Count=.N),names(x)]
 unique(x$Count)
-### there were more than 1s this time
 y <- x[Count>1]
 ## should be 0 obs in y now 
 

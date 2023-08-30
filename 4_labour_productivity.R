@@ -484,135 +484,6 @@ output_hc[`.id`=="PAHO", `.id` :="AMRO"]
 
 write.csv(output_hc, file="outputs/productivity_loss_deaths_all.csv")
 
-
-
-################***** Working Life Years Lost ******#####
-
-wlyl_summary <- function(hc.prod) {
-  x <-    hc.prod[, lapply(.SD, sum, na.rm=TRUE),
-                  by = c("WHO.Region","Pathogen",
-                         "vaccine_id" ,
-                         "Antibiotic.class",
-                          "Infectious.syndrome" ),
-                  .SDcols=c("averted_HC",
-                            "HC_cost")]
-  return(x)
-}
-
-### !!! for update - make more efficient & update labelling to match productivity
-output_lst <- list()
-unique(cases$who.region)
-output_lst$WPRO <- wlyl_summary(hc.calculator(region="WPRO",
-                                              LT=LT,
-                                              cases=cases,
-                                              wage_region=wage_region_LY,
-                                              r=0))
-output_lst$SEARO <- wlyl_summary(hc.calculator(region="SEARO",
-                                                    LT=LT,
-                                                    cases=cases,
-                                                    wage_region=wage_region_LY,
-                                                    r=0))
-output_lst$EURO <- wlyl_summary(hc.calculator(region="EURO",
-                                                   LT=LT,
-                                                   cases=cases,
-                                                   wage_region=wage_region_LY,
-                                                   r=0))
-output_lst$PAHO <- wlyl_summary(hc.calculator(region="PAHO",
-                                                   LT=LT,
-                                                   cases=cases,
-                                                   wage_region=wage_region_LY,
-                                                   r=0))
-output_lst$AFRO <- wlyl_summary(hc.calculator(region="AFRO",
-                                                   LT=LT,
-                                                   cases=cases,
-                                                   wage_region=wage_region_LY,
-                                                   r=0))
-output_lst$EMRO <-wlyl_summary(hc.calculator(region="EMRO",
-                                                  LT=LT,
-                                                  cases=cases,
-                                                  wage_region=wage_region_LY,
-                                                  r=0))
-output_hc <- rbindlist(output_lst, idcol=TRUE)
-
-output_hc[`.id`=="PAHO", `.id` :="AMRO"]
-save(output_hc,file="outputs/working_life_years_lost.Rdata" )
-
-######################*****FRICTION COST METHOD**********############
-#################
-load("data_inputs/epi_inputs_all.RData") ## cases
-wage_region <- as.data.table(read.csv("data_inputs/regional_labour.csv"))
-wage_template <-  as.data.table(read.csv("data_inputs/wage_template.csv"))
-
-FC <- all_data
-rm(all_data)
-FC <- FC %>%
-  unite("vaccine_id",vaccine:target_population) %>%
-  as.data.table()
-## create low/numerical definers for groups
-FC[, c("low","high") := tstrsplit(Age.group, "to")]
-
-FC[Age.group=="Early Neonatal"|
-     Age.group== "Late Neonatal"|
-     Age.group=="Post Neonatal", low := 0]
-FC[Age.group=="Early Neonatal"|
-     Age.group== "Late Neonatal"|
-     Age.group=="Post Neonatal", high := 0]
-FC[Age.group=="95 plus" , low := 95] 
-FC[Age.group=="95 plus" , high := 100] ## capping at 100
-
-FC[ , low := as.numeric(low)]
-FC[ , high := as.numeric(high)]
-FC[ , midpoint := ceiling((low+high)/2)] ## for merging in later
-
-FC[WHO.Region=="European Region", who.region := "EURO"]            
-FC[WHO.Region=="Western Pacific Region", who.region := "WPRO"]       
-FC[WHO.Region== "Region of the Americas", who.region := "PAHO"]             
-FC[WHO.Region=="South-East Asia Region", who.region := "SEARO"]     
-FC[WHO.Region=="Eastern Mediterranean Region", who.region := "EMRO"]
-FC[WHO.Region=="African Region", who.region := "AFRO"]
-FC[, c("low","high") := tstrsplit(Age.group, "to")]
-FC[Age.group=="Early Neonatal"|
-     Age.group== "Late Neonatal"|
-     Age.group=="Post Neonatal", low := 0]
-FC[Age.group=="Early Neonatal"|
-     Age.group== "Late Neonatal"|
-     Age.group=="Post Neonatal", high := 0]
-FC[Age.group=="95 plus" , low := 95]
-FC[Age.group=="95 plus" , high := 100] ## capping at 100
-
-FC[ , low := as.numeric(low)]
-FC[ , high := as.numeric(high)]
-FC[ , midpoint := ceiling((low+high)/2)] ## for merging in later
-
-dt.wage <- merge(FC,wage_region, by="who.region")
-
-dt.wage <- dt.wage[!is.na(Age.group)]
-
-wage_template <- wage_template[,  c("low","high","wage_adjuster")]
-
-FC.wage <- dt.wage[wage_template, on = .(midpoint >= low, midpoint <= high), nomatch = 0]
-
-FC.wage[, wage := (((average_scenario1)*6*wage_adjuster))] ## 6 months friction cost
-FC.wage[ , wage_loss_total := deaths_resistant*wage]
-FC.wage[ , wage_loss_averted := vaccine_avertable_deaths_resistant*wage]
-
-## sum prod_hc by group
-total_wage_FC <- FC.wage[, lapply(.SD, sum, na.rm=TRUE),
-                                by = c("who.region",
-                                       "Pathogen" ,
-                                       "vaccine_id",
-                                       "Antibiotic.class",
-                                       "Infectious.syndrome"
-                                ),
-                                .SDcols=c("wage_loss_total",
-                                          "wage_loss_averted")]
-
-total_wage_FC[who.region=="PAHO", who.region := "AMRO"]
-
-total_wage_FC <- total_wage_FC[vaccine_id!="_NA_NA___"]
-write.csv(total_wage_FC, file="outputs/vaccine_avertable_FC.csv")
-
-
 ######### ******SCENARIO 2 IN HC *****###################
 
 hc.calculator.sc2 <- function(region,LT,cases,wage_region,
@@ -644,6 +515,7 @@ hc.calculator.sc2 <- function(region,LT,cases,wage_region,
   dt.wage <- wage_template
   dt.wage[ , wage := (wagetemp$average_scenario2)*wage_adjuster] 
   
+  
   r <- r
   
   myvector <- c("Age",country)
@@ -656,6 +528,7 @@ hc.calculator.sc2 <- function(region,LT,cases,wage_region,
     
     y <- dt[, ..myvector]
     colnames(y) <- c("x","q_x")
+    
     
     ## order based on x
     y <- y[order(x)]
@@ -939,3 +812,131 @@ output_hc <- output_hc[vaccine_id!="_NA_NA___"]
 output_hc[`.id`=="PAHO", `.id` :="AMRO"]
 
 write.csv(output_hc, file="outputs/productivity_loss_deaths_all_sc2.csv")
+
+################***** Working Life Years Lost ******#####
+
+wlyl_summary <- function(hc.prod) {
+  x <-    hc.prod[, lapply(.SD, sum, na.rm=TRUE),
+                  by = c("WHO.Region","Pathogen",
+                         "vaccine_id" ,
+                         "Antibiotic.class",
+                          "Infectious.syndrome" ),
+                  .SDcols=c("averted_HC",
+                            "HC_cost")]
+  return(x)
+}
+
+### !!! for update - make more efficient & update labelling to match productivity
+output_lst <- list()
+unique(cases$who.region)
+output_lst$WPRO <- wlyl_summary(hc.calculator(region="WPRO",
+                                              LT=LT,
+                                              cases=cases,
+                                              wage_region=wage_region_LY,
+                                              r=0))
+output_lst$SEARO <- wlyl_summary(hc.calculator(region="SEARO",
+                                                    LT=LT,
+                                                    cases=cases,
+                                                    wage_region=wage_region_LY,
+                                                    r=0))
+output_lst$EURO <- wlyl_summary(hc.calculator(region="EURO",
+                                                   LT=LT,
+                                                   cases=cases,
+                                                   wage_region=wage_region_LY,
+                                                   r=0))
+output_lst$PAHO <- wlyl_summary(hc.calculator(region="PAHO",
+                                                   LT=LT,
+                                                   cases=cases,
+                                                   wage_region=wage_region_LY,
+                                                   r=0))
+output_lst$AFRO <- wlyl_summary(hc.calculator(region="AFRO",
+                                                   LT=LT,
+                                                   cases=cases,
+                                                   wage_region=wage_region_LY,
+                                                   r=0))
+output_lst$EMRO <-wlyl_summary(hc.calculator(region="EMRO",
+                                                  LT=LT,
+                                                  cases=cases,
+                                                  wage_region=wage_region_LY,
+                                                  r=0))
+output_hc <- rbindlist(output_lst, idcol=TRUE)
+
+output_hc[`.id`=="PAHO", `.id` :="AMRO"]
+save(output_hc,file="outputs/working_life_years_lost.Rdata" )
+
+######################*****FRICTION COST METHOD**********############
+#################
+load("data_inputs/epi_inputs_all.RData") ## cases
+wage_region <- as.data.table(read.csv("data_inputs/regional_labour.csv"))
+wage_template <-  as.data.table(read.csv("data_inputs/wage_template.csv"))
+
+FC <- all_data
+rm(all_data)
+FC <- FC %>%
+  unite("vaccine_id",vaccine:target_population) %>%
+  as.data.table()
+## create low/numerical definers for groups
+FC[, c("low","high") := tstrsplit(Age.group, "to")]
+
+FC[Age.group=="Early Neonatal"|
+     Age.group== "Late Neonatal"|
+     Age.group=="Post Neonatal", low := 0]
+FC[Age.group=="Early Neonatal"|
+     Age.group== "Late Neonatal"|
+     Age.group=="Post Neonatal", high := 0]
+FC[Age.group=="95 plus" , low := 95] 
+FC[Age.group=="95 plus" , high := 100] ## capping at 100
+
+FC[ , low := as.numeric(low)]
+FC[ , high := as.numeric(high)]
+FC[ , midpoint := ceiling((low+high)/2)] ## for merging in later
+
+FC[WHO.Region=="European Region", who.region := "EURO"]            
+FC[WHO.Region=="Western Pacific Region", who.region := "WPRO"]       
+FC[WHO.Region== "Region of the Americas", who.region := "PAHO"]             
+FC[WHO.Region=="South-East Asia Region", who.region := "SEARO"]     
+FC[WHO.Region=="Eastern Mediterranean Region", who.region := "EMRO"]
+FC[WHO.Region=="African Region", who.region := "AFRO"]
+FC[, c("low","high") := tstrsplit(Age.group, "to")]
+FC[Age.group=="Early Neonatal"|
+     Age.group== "Late Neonatal"|
+     Age.group=="Post Neonatal", low := 0]
+FC[Age.group=="Early Neonatal"|
+     Age.group== "Late Neonatal"|
+     Age.group=="Post Neonatal", high := 0]
+FC[Age.group=="95 plus" , low := 95]
+FC[Age.group=="95 plus" , high := 100] ## capping at 100
+
+FC[ , low := as.numeric(low)]
+FC[ , high := as.numeric(high)]
+FC[ , midpoint := ceiling((low+high)/2)] ## for merging in later
+
+dt.wage <- merge(FC,wage_region, by="who.region")
+
+dt.wage <- dt.wage[!is.na(Age.group)]
+
+wage_template <- wage_template[,  c("low","high","wage_adjuster")]
+
+FC.wage <- dt.wage[wage_template, on = .(midpoint >= low, midpoint <= high), nomatch = 0]
+
+FC.wage[, wage := (((average_scenario1)*6*wage_adjuster))] ## 6 months friction cost
+FC.wage[ , wage_loss_total := deaths_resistant*wage]
+FC.wage[ , wage_loss_averted := vaccine_avertable_deaths_resistant*wage]
+
+## sum prod_hc by group
+total_wage_FC <- FC.wage[, lapply(.SD, sum, na.rm=TRUE),
+                                by = c("who.region",
+                                       "Pathogen" ,
+                                       "vaccine_id",
+                                       "Antibiotic.class",
+                                       "Infectious.syndrome"
+                                ),
+                                .SDcols=c("wage_loss_total",
+                                          "wage_loss_averted")]
+
+total_wage_FC[who.region=="PAHO", who.region := "AMRO"]
+
+total_wage_FC <- total_wage_FC[vaccine_id!="_NA_NA___"]
+write.csv(total_wage_FC, file="outputs/vaccine_avertable_FC.csv")
+
+
