@@ -974,3 +974,83 @@ class.cost <- class.cost %>%
   group_by(class) %>%
   summarise(total = sum(cost_med))
 
+######## USA and Thailand ############
+
+mediqr.x <- function(vaccine_output_dt){
+  
+ x <-  vaccine_output_dt[iso3c=="USA"|iso3c=="THA"]
+  x <- x %>% group_by(iso3c, Pathogen,
+                                      vaccine_id, run) %>%
+    summarise(who_region_cost_A = sum(avertable_cost_cases, na.rm=TRUE),
+              who_region_cost_T = sum(cost_cases, na.rm=TRUE),
+              who_region_days_A = sum(avertable_days_cases, na.rm=TRUE),
+              who_region_days_T = sum(days_cases, na.rm=TRUE))  %>%
+    group_by( iso3c,
+              vaccine_id, Pathogen) %>%
+    summarise(median_avert_costing = median(who_region_cost_A, na.rm=TRUE),
+              LOWIQR_avert_costing = quantile(who_region_cost_A,0.25, na.rm = TRUE),
+              HIGHIQR_avert_costing = quantile(who_region_cost_A,0.75, na.rm = TRUE),
+              median_total_costing = median(who_region_cost_T, na.rm=TRUE),
+              LOWIQR_total_costing = quantile(who_region_cost_T,0.25, na.rm = TRUE),
+              HIGHIQR_total_costing = quantile(who_region_cost_T,0.75, na.rm = TRUE),
+              median_avert_days = median(who_region_days_A, na.rm=TRUE),
+              LOWIQR_avert_days = quantile(who_region_days_A,0.25, na.rm = TRUE),
+              HIGHIQR_avert_days = quantile(who_region_days_A,0.75, na.rm = TRUE),
+              median_total_days = median(who_region_days_T, na.rm=TRUE),
+              LOWIQR_total_days = quantile(who_region_days_T,0.25, na.rm = TRUE),
+              HIGHIQR_total_days = quantile(who_region_days_T,0.75, na.rm = TRUE)) %>%
+    
+    as.data.table()
+  return(x)
+}
+########### nonadj ################
+hospital_cost_l <- list()
+for (i in 1:length(nonadj)){
+  load(nonadj[i])
+  vaccine_output_dt[WHO.Region=="PAHO", WHO.Region := "AMRO"]
+  hospital_cost_l[[i]] <- mediqr.x(vaccine_output_dt)
+}
+
+########### adj ################
+hospital_cost_l_adj <- list()
+
+hospital_cost_l_adj[[1]] <- mediqr.x(serotype)
+hospital_cost_l_adj[[2]] <- mediqr.x(serotype.eld)
+hospital_cost_l_adj[[3]] <- mediqr.x(improv)
+hospital_cost_l_adj[[4]] <- mediqr.x(improv.eld)
+hospital_cost_l_adj[[5]] <- mediqr.x(Hib)
+
+
+hospital_c <- rbindlist(hospital_cost_l)
+hospital_cA <- rbindlist(hospital_cost_l_adj)
+hospital_c <- rbind(hospital_c,hospital_cA)
+
+hospital_c[, c("vaccine_target_disease","efficacy" ,"coverage"  ,
+               "duration", "target disease","target population") := tstrsplit(vaccine_id, "_", fixed=TRUE)]
+
+keep_vac <- c(               
+  "Haemophilus influenzae type B_both_0.9_5 years_All_6, 10, 14 weeks"                                                           
+  ,"Salmonella Typhi_0.85_0.7_15 years_All_9 months"                                                                              
+  , "Staphylococcus aureus_0.6_0.7_5 years_All_All age groups"                                                               
+  , "E. coli - non-diarrhogenic_0.7_0.7_5 years_All except Diarrhoea_All age groups"                                      
+  , "ETEC_0.6_0.7_5 years_Diarrhoea_6 months"                                                                   
+  , "Group A streptococcus_0.7_0.7_5 years_All_6 weeks"                                                                            
+  , "Klebsiella pneumoniae - all_0.7_0.7_5 years_All_All age groups"                                                      
+  , "Streptococcus pneumoniae - Improved_both_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6 weeks & elderly age group"
+  , "Pseudomonas aeruginosa_0.7_0.7_5 years_BSI, LRI and thorax infections_All age groups"                                         
+  ,"Enterococcus faecium_0.7_0.7_5 years_All_All age groups"                                                                      
+  , "Salmonella paratyphi_0.7_0.7_5 years_All_9 months"                                                                            
+  , "Acinetobacter baumannii - all_0.7_0.7_5 years_All_All age groups"                                                            
+  , "Mycobacterium tuberculosis - Improved_0.8_0.7_10 years_All_0 weeks + boost every 10 years"                                    
+  , "Shigella_0.6_0.7_5 years_All_6 months" 
+  ,"Non-typhoidal Salmonella_0.8_0.7_5 years_All_6 weeks & 9 months" ) 
+
+  global_hospital <- hospital_c[hospital_c$vaccine_id %in% keep_vac]
+  global_hospital[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
+                  median_total_costing :=0]
+
+  tha <- global_hospital[iso3c=="THA"]
+  usa <- global_hospital[iso3c=="USA"]
+  
+  sum(tha$median_total_costing)
+  sum(usa$median_total_costing)
