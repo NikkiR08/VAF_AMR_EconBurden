@@ -33,7 +33,8 @@ keep_vac <- c(
 , "Salmonella paratyphi_0.7_0.7_5 years_All_9 months"                                                                            
 , "Acinetobacter baumannii - all_0.7_0.7_5 years_All_All age groups"                                                            
 , "Mycobacterium tuberculosis - Improved_0.8_0.7_10 years_All_0 weeks + boost every 10 years"                                    
-, "Shigella_0.6_0.7_5 years_All_6 months"  ) 
+, "Shigella_0.6_0.7_5 years_All_6 months",
+"Non-typhoidal Salmonella_0.8_0.7_5 years_All_6 weeks & 9 months" ) 
 ### need to specify different ones for productivity as didn't group
 ## vaccine scenarios like had done for 
 
@@ -55,7 +56,8 @@ keep_vac_prod <- c(
   , "Salmonella paratyphi_0.7_0.7_5 years_All_9 months"                                                                            
   , "Acinetobacter baumannii - all_0.7_0.7_5 years_All_All age groups"                                                            
   , "Mycobacterium tuberculosis - Improved_0.8_0.7_10 years_All_0 weeks + boost every 10 years"                                    
-  , "Shigella_0.6_0.7_5 years_All_6 months"  ) 
+  , "Shigella_0.6_0.7_5 years_All_6 months"
+  ,"Non-typhoidal Salmonella_0.8_0.7_5 years_All_6 weeks & 9 months" ) 
 
 ##### 
 
@@ -128,6 +130,18 @@ classrank <- (hospital_c[, lapply(.SD, sum, na.rm=TRUE),
                       .SDcols=c("cost_med",
                                 "avert_cost_med")])
 
+pathrank <- (hospital_c[, lapply(.SD, sum, na.rm=TRUE),
+                         by="Pathogen",
+                         .SDcols=c("cost_med",
+                                   "avert_cost_med")])
+
+
+syndrank <- (hospital_c[, lapply(.SD, sum, na.rm=TRUE),
+                        by="Infectious.syndrome",
+                        .SDcols=c("cost_med",
+                                  "avert_cost_med")])
+
+
 hospital_c <- setorder(hospital_c, cost_med)
 
 ## get pathogen in order of cost for plots 
@@ -142,6 +156,7 @@ hospital_c$Pathogen <- factor(hospital_c$Pathogen ,
 path <- hospital_c$Pathogen
 
 hospital_c$class <- factor(hospital_c$class, levels=unique(hospital_c$class))
+class <- hospital_c$class
 
 abxcolours <-
   setNames( c("#660099", "#E69F00", "#56B4E9", "#009E73",
@@ -175,6 +190,8 @@ load("outputs/total_global_cost.RData")
 
 global_hospital_totals <- cleaning.dt(hospital_c)
 
+### note this is slightly different - median of sums to sum of medians calculated
+### above 
 global_hospital_totals <- global_hospital_totals %>% 
   group_by(run) %>%
   summarise(cost = sum(hospital_cost, na.rm=TRUE),
@@ -221,6 +238,9 @@ prod_deaths[Antibiotic.class=="Multi-drug resistance in Salmonella Typhi and Par
             .SDcols=c("HC_cost",
                       "averted_HC")])*1/1e9
 
+## setting class the same factor so graphs match
+
+
 global_prod_deaths <- prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
                                   by = c("Pathogen",
                                          "Antibiotic.class",
@@ -228,7 +248,9 @@ global_prod_deaths <- prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
                                   .SDcols=c("HC_cost",
                                             "averted_HC")]
 
-
+pathrankprod <- (prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
+                        by="Pathogen",
+                        .SDcols=c("HC_cost","averted_HC")])
 ### get it so the productivity and hc costs are the same order of pathogens 
 ### and the same colours for antibiotic classes
 
@@ -245,6 +267,9 @@ global_prod_deaths <- merge(global_prod_deaths,abx_dic,by="Antibiotic.class")
 
 global_prod_deaths$Pathogen <- factor(global_prod_deaths$Pathogen , 
                               levels = levels(path))
+
+global_prod_deaths$class <- factor(global_prod_deaths$class , 
+                                      levels = levels(class))
 
 ggplot(global_prod_deaths, aes(Pathogen, HC_cost,
                                fill=class)) +
@@ -394,6 +419,15 @@ syndromerank <- prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
 
 write.csv(syndromerank, file="outputs/global_syndrome_rankings_productivity.csv")
 
+region_prod  <- prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
+                         by = c(
+                           ".id"),
+                         .SDcols=c("averted_HC")]
+
+syndrome_prod  <-prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
+                           by = c(
+                             "Infectious.syndrome"),
+                           .SDcols=c("averted_HC")]
 
 ### averted by pathogen
 regional_prod_path  <-prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
@@ -421,6 +455,8 @@ regional_prod_path  <-output_hc[, lapply(.SD, sum, na.rm=TRUE),
                                   by = c("Pathogen",
                                          ".id"),
                                   .SDcols=c("averted_HC")]
+
+
 regional_prod_path[.id=="PAHO",.id := "AMRO"]
 
 ggplot(regional_prod_path  , aes(x = Pathogen, y = averted_HC,
@@ -961,99 +997,6 @@ total.cost.plot <- function (all.dt){
 total.cost.plot(all.dt)
 
 
-#### unit cost plotting code #####
-
-#### running using global unit cost from combining_cost_cases_NEW
-
-# ggplot(UNITcost_averted_global, aes(x=interaction(Exposure_Group), y=Median_unitcost, 
-#                                     fill=Infectious.syndrome)) + 
-#   geom_bar(position=position_dodge(), stat="identity",
-#            colour="black", # Use black outlines,
-#            size=.3) +      # Thinner lines
-#   geom_errorbar(aes(ymin=LOWIQR_unitcost, ymax=HIGIQR_unitcost),
-#                 size=.3,    # Thinner lines
-#                 width=.2,
-#                 position=position_dodge(.9)) +
-#   xlab("Resistance & Bacterial Exposure") +
-#   ylab("Hospital Cost per Case (2019 USD)") +
-#   ggtitle("Global Averages") +
-#   scale_fill_viridis_d()+
-#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
-#   coord_cartesian(ylim=c(NA, 30000), expand = FALSE)
-
-#### log scale
-# ggplot(UNITcost_averted_global, aes(x=interaction(Exposure_Group), y=Median_unitcost, 
-#                                     fill=Infectious.syndrome)) + 
-#   geom_bar(position=position_dodge(), stat="identity",
-#            colour="black", # Use black outlines,
-#            size=.3) +      # Thinner lines
-#   geom_errorbar(aes(ymin=LOWIQR_unitcost, ymax=HIGIQR_unitcost),
-#                 size=.3,    # Thinner lines
-#                 width=.2,
-#                 position=position_dodge(.9)) +
-#   xlab("Resistance & Bacterial Exposure") +
-#   ylab("Hospital Cost per Case (2019 USD)") +
-#   ggtitle("Global Averages") +
-#   scale_fill_viridis_d()+
-#   scale_y_continuous(trans="log10")+
-#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-
-### multi panel by gram stain
-load("outputs/hospitalC_global_los_npop.RData")
-### doesn't matter about vaccine scenarios for this
-
-## remove TB !!!
-UNITcost_averted_global <- as.data.table(hospital_c) 
-UNITcost_averted_global <- UNITcost_averted_global[Infectious.syndrome !="TB"]
-UNITcost_averted_global[ ,Exposure_Group := paste(class,Pathogen)]
-
-## link gram stain
-bug_dic <- read.csv("data_all/bug_gram.csv")
-
-UNITcost_averted_global2 <- merge(UNITcost_averted_global,bug_dic, 
-                                  by.x="Pathogen",
-                                  by.y="bacteria",
-                                  all.x=TRUE,
-                                  all.y=FALSE)
-
-### fill in by hand miss-matches
-UNITcost_averted_global2[Pathogen=="Haemophilus influenzae"
-                         |Pathogen=="Non-typhoidal Salmonella" 
-                         |Pathogen=="Salmonella Paratyphi"  
-                         |Pathogen=="Salmonella Typhi"
-                         |Pathogen=="Shigella spp.", gram.stain:="gn"]  
-
-UNITcost_averted_global2[gram.stain=="gn", gram.stain := "Gram-negative"]
-UNITcost_averted_global2[gram.stain=="gp", gram.stain := "Gram-positive"]
-
-## shorten some long exposure group names
-UNITcost_averted_global2[Exposure_Group=="Fluoroquinolones or MDR in Salmonella Salmonella Paratyphi" ,
-                         Exposure_Group:="Fluoroquinolones/MDR Salmonella Paratyphi" ]
-UNITcost_averted_global2[Exposure_Group=="Fluoroquinolones or MDR in Salmonella Salmonella Typhi" ,
-                         Exposure_Group:="Fluoroquinolones/MDR Salmonella Salmonella Typhi" ]
-UNITcost_averted_global2[Exposure_Group=="Fluoroquinolones or MDR in Salmonella Non-typhoidal Salmonella",
-                         Exposure_Group:= "Fluoroquinolones/MDR Non-typhoidal Salmonella" ]
-
-ggplot(UNITcost_averted_global2, aes(x=interaction(Exposure_Group), y=Median_unitcost, 
-                                    fill=Infectious.syndrome)) + 
-  geom_bar(position=position_dodge(), stat="identity",
-           colour="black", # Use black outlines,
-           size=.3) +      # Thinner lines
-  geom_errorbar(aes(ymin=LOWIQR_unitcost, ymax=HIGIQR_unitcost),
-                size=.3,    # Thinner lines
-                width=.2,
-                position=position_dodge(.9)) +
-  xlab("Resistance & Bacterial Exposure") +
-  ylab("Hospital Cost per Case (2019 USD)") +
-  scale_fill_brewer(palette = "Paired")+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-        text = element_text(size = 15))+
-  coord_cartesian(ylim=c(NA, 10000), expand = FALSE)+
-  facet_wrap(~gram.stain, scales="free")
-
-
-
-
 ######## productivity cost averted ##################
 
 ### create min and max values
@@ -1139,7 +1082,14 @@ load("outputs/working_life_years_lost.Rdata")
 
 output_hc <- as.data.table(output_hc)
 ### getting one vaccine/one DRI per group
-output_hc <- cleaning.dt(output_hc)
+output_hc <- cleaning.dt.prod(output_hc)
+
+output_hc[Pathogen=="Haemophilus influenzae",
+            vaccine_id := "Haemophilus influenzae type B_both_0.9_5 years_All_6, 10, 14 weeks"]
+
+output_hc[Pathogen=="Streptococcus pneumoniae",
+            vaccine_id := "Streptococcus pneumoniae - Improved_both_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6 weeks & elderly age group"]
+
 
 regional_prod_path  <-output_hc[, lapply(.SD, sum, na.rm=TRUE),
                                 by = c("Pathogen",
@@ -1214,6 +1164,102 @@ all.dt2 %>%
         plot.margin=margin(10,50,10,10)
   )
 
+
+
+#### unit cost plotting code #####
+
+#### running using global unit cost from combining_cost_cases_NEW
+
+# ggplot(UNITcost_averted_global, aes(x=interaction(Exposure_Group), y=Median_unitcost, 
+#                                     fill=Infectious.syndrome)) + 
+#   geom_bar(position=position_dodge(), stat="identity",
+#            colour="black", # Use black outlines,
+#            size=.3) +      # Thinner lines
+#   geom_errorbar(aes(ymin=LOWIQR_unitcost, ymax=HIGIQR_unitcost),
+#                 size=.3,    # Thinner lines
+#                 width=.2,
+#                 position=position_dodge(.9)) +
+#   xlab("Resistance & Bacterial Exposure") +
+#   ylab("Hospital Cost per Case (2019 USD)") +
+#   ggtitle("Global Averages") +
+#   scale_fill_viridis_d()+
+#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+#   coord_cartesian(ylim=c(NA, 30000), expand = FALSE)
+
+#### log scale
+# ggplot(UNITcost_averted_global, aes(x=interaction(Exposure_Group), y=Median_unitcost, 
+#                                     fill=Infectious.syndrome)) + 
+#   geom_bar(position=position_dodge(), stat="identity",
+#            colour="black", # Use black outlines,
+#            size=.3) +      # Thinner lines
+#   geom_errorbar(aes(ymin=LOWIQR_unitcost, ymax=HIGIQR_unitcost),
+#                 size=.3,    # Thinner lines
+#                 width=.2,
+#                 position=position_dodge(.9)) +
+#   xlab("Resistance & Bacterial Exposure") +
+#   ylab("Hospital Cost per Case (2019 USD)") +
+#   ggtitle("Global Averages") +
+#   scale_fill_viridis_d()+
+#   scale_y_continuous(trans="log10")+
+#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+### multi panel by gram stain
+load("outputs/hospitalC_global_los_npop.RData")
+### doesn't matter about vaccine scenarios for this
+
+## remove TB !!!
+UNITcost_averted_global <- as.data.table(hospital_c) 
+UNITcost_averted_global <- UNITcost_averted_global[Infectious.syndrome !="TB"]
+UNITcost_averted_global[ ,Exposure_Group := paste(class,Pathogen)]
+
+## link gram stain
+bug_dic <- read.csv("data_all/bug_gram.csv")
+
+UNITcost_averted_global2 <- merge(UNITcost_averted_global,bug_dic, 
+                                  by.x="Pathogen",
+                                  by.y="bacteria",
+                                  all.x=TRUE,
+                                  all.y=FALSE)
+
+### fill in by hand miss-matches
+UNITcost_averted_global2[Pathogen=="Haemophilus influenzae"
+                         |Pathogen=="Non-typhoidal Salmonella" 
+                         |Pathogen=="Salmonella Paratyphi"  
+                         |Pathogen=="Salmonella Typhi"
+                         |Pathogen=="Shigella spp.", gram.stain:="gn"]  
+
+UNITcost_averted_global2[gram.stain=="gn", gram.stain := "Gram-negative"]
+UNITcost_averted_global2[gram.stain=="gp", gram.stain := "Gram-positive"]
+
+## shorten some long exposure group names
+UNITcost_averted_global2[Exposure_Group=="Fluoroquinolones or MDR in Salmonella Salmonella Paratyphi" ,
+                         Exposure_Group:="Fluoroquinolones/MDR Salmonella Paratyphi" ]
+UNITcost_averted_global2[Exposure_Group=="Fluoroquinolones or MDR in Salmonella Salmonella Typhi" ,
+                         Exposure_Group:="Fluoroquinolones/MDR Salmonella Salmonella Typhi" ]
+UNITcost_averted_global2[Exposure_Group=="Fluoroquinolones or MDR in Salmonella Non-typhoidal Salmonella",
+                         Exposure_Group:= "Fluoroquinolones/MDR Non-typhoidal Salmonella" ]
+
+ggplot(UNITcost_averted_global2, aes(x=interaction(Exposure_Group), y=Median_unitcost, 
+                                     fill=Infectious.syndrome)) + 
+  geom_bar(position=position_dodge(), stat="identity",
+           colour="black", # Use black outlines,
+           size=.3) +      # Thinner lines
+  geom_errorbar(aes(ymin=LOWIQR_unitcost, ymax=HIGIQR_unitcost),
+                size=.3,    # Thinner lines
+                width=.2,
+                position=position_dodge(.9)) +
+  xlab("Resistance & Bacterial Exposure") +
+  ylab("Hospital Cost per Case (2019 USD)") +
+  scale_fill_brewer(palette = "Paired")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        text = element_text(size = 15))+
+  coord_cartesian(ylim=c(NA, 10000), expand = FALSE)+
+  facet_wrap(~gram.stain, scales="free")
+
+
+
+
+
 ##### output table for total impacts pre and post vaccine ####
 
 load("outputs/hospitalC_global_averted_pathogen.RData")
@@ -1273,3 +1319,6 @@ eu <- pathrank$EURO
 sea <- pathrank$SEARO
 wp <- pathrank$WPRO
 
+region.prod <- all.prod.methods[, lapply(.SD, sum, na.rm=TRUE),
+                             by=c(".id"),
+                             .SDcols=c("sc1_total")]
