@@ -562,5 +562,11 @@ test <- vaccine_output_dt
     summarise(cases_averted_hospitalised = sum(cases_averted_hospitalised, na.rm=TRUE)) 
   
 
+  test_nosyndrome_cases <-  cases_averted %>% group_by(WHO.Region, vaccine_id) %>%
+    summarise(cases_averted_hospitalised = sum(cases_hospitalised, na.rm=TRUE)) 
+  
+  test_cases <-  cases_averted %>% group_by(WHO.Region, vaccine_id, Infectious.syndrome) %>%
+    summarise(cases_averted_hospitalised = sum(cases_hospitalised, na.rm=TRUE)) 
+  
   
   ### the case numbers match up in terms of the top 3
