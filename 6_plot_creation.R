@@ -1001,6 +1001,43 @@ all.dt2 %>%
   )
 
 
+######### figure 4 ##############
+###!!! if time check dataset all.dt2 not had bugs in creating/merging etc.
+
+### transform dataset
+hospital_avert <- all.dt2[ ,c("Pathogen",
+                              ".id",
+                              "avert_cost_med"  ,      
+                              "avert_cost_lo",
+                              "avert_cost_hi",
+                              "avert_days_med"  ,
+                              "avert_days_lo" ,
+                              "avert_days_hi" )]
+
+transf_fact <- max(hospital_avert$avert_cost_med)/max(hospital_avert$avert_days_med)
+
+## relabel regions
+hospital_avert[.id=="AFRO" , .id := "AFR"]
+hospital_avert[.id=="AMRO" , .id := "AMR"]
+hospital_avert[.id=="EMRO" , .id := "EMR"]
+hospital_avert[.id=="EURO" , .id := "EUR"]
+hospital_avert[.id=="SEARO" , .id := "SEAR"]
+hospital_avert[.id=="WPRO" , .id := "WPRO"]
+
+ggplot(hospital_avert, aes(x = Pathogen, y = avert_cost_med)) +
+  geom_col(fill="lightblue1") +
+  geom_errorbar(aes(ymin = avert_cost_lo, ymax = avert_cost_hi),
+                position = position_dodge(0.9), width = .2, color='midnightblue')+
+  geom_point(aes(y = transf_fact * avert_days_med), size=2, color='darkslategrey')+
+  facet_wrap(~.id)+ 
+  scale_y_continuous(labels = scales::label_number_si(),
+                     sec.axis = sec_axis(trans = ~ . / transf_fact, 
+                                         name = "Total Averted Bed Days (for Points)",
+                                         labels = scales::label_number_si()))+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+      text = element_text(size = 15))+
+  ylab("Total Averted Hospital Cost (for Bars)")
+
 
 ##### output table for total impacts pre and post vaccine ####
 
@@ -1063,9 +1100,9 @@ region.prod <- all.prod.methods[, lapply(.SD, sum, na.rm=TRUE),
 load("outputs/hospitalC_global_los_npop.RData")
 ### doesn't matter about vaccine scenarios for this
 
-## remove TB !!!
-UNITcost_averted_global <- as.data.table(hospital_c) 
-UNITcost_averted_global <- UNITcost_averted_global[Infectious.syndrome !="TB"]
+
+UNITcost_averted_global <- as.data.table(hospital_c)
+# UNITcost_averted_global <- UNITcost_averted_global[Infectious.syndrome !="TB"] ## remove TB !!!
 UNITcost_averted_global[ ,Exposure_Group := paste(class,Pathogen)]
 
 ## link gram stain
@@ -1090,7 +1127,7 @@ UNITcost_averted_global2[gram.stain=="gp", gram.stain := "Gram-positive"]
 ## shorten some long exposure group names
 UNITcost_averted_global2[Exposure_Group=="Fluoroquinolones or MDR in Salmonella Salmonella Paratyphi" ,
                          Exposure_Group:="Fluoroquinolones/MDR Salmonella Paratyphi" ]
-UNITcost_averted_global2[Exposure_Group=="Fluoroquinolones or MDR in Salmonella Salmonella Typhi" ,
+UNITcost_averted_global2[Exposure_Group=="Fluoroquinolones or MDR in Salmonella Typhi" ,
                          Exposure_Group:="Fluoroquinolones/MDR Salmonella Salmonella Typhi" ]
 UNITcost_averted_global2[Exposure_Group=="Fluoroquinolones or MDR in Salmonella Non-typhoidal Salmonella",
                          Exposure_Group:= "Fluoroquinolones/MDR Non-typhoidal Salmonella" ]
@@ -1114,4 +1151,109 @@ ggplot(UNITcost_averted_global2, aes(x=interaction(Exposure_Group), y=Median_uni
 
 
 
+########## new plot 14/12
 
+## update syndrome labels
+UNITcost_averted_global2[Infectious.syndrome=="Bacterial skin infections" ,
+                         Infectious.syndrome:="Skin"]
+UNITcost_averted_global2[Infectious.syndrome=="Cardiac infections" ,
+                         Infectious.syndrome:="Cardiac"]
+UNITcost_averted_global2[Infectious.syndrome=="LRI and thorax infections" | 
+                           Infectious.syndrome=="TB" ,
+                         Infectious.syndrome:="RTI/TB"]
+UNITcost_averted_global2[Infectious.syndrome=="Bone and joint infections"   ,
+                         Infectious.syndrome:="Bone & Joint"]
+UNITcost_averted_global2[Infectious.syndrome=="Intra-abdominal infections" ,
+                         Infectious.syndrome:="IAI"]
+UNITcost_averted_global2[Infectious.syndrome=="CNS infections"  ,
+                         Infectious.syndrome:="CNS"]
+UNITcost_averted_global2[Infectious.syndrome=="Typhoid, paratyphoid, and iNTS",
+                         Infectious.syndrome:="(para-)/Typhoid/iNTS"]
+
+# ## order
+temp <- UNITcost_averted_global2 %>% 
+  group_by(Infectious.syndrome) %>% summarise(mM=mean(Median_unitcost))
+
+UNITcost_averted_global2[ ,Infectious.syndrome:=factor(Infectious.syndrome,
+                                                          levels=c("RTI/TB",
+                                                                   "UTI",
+                                                                   "Cardiac",
+                                                                   "CNS",
+                                                                   "Diarrhoea",
+                                                                   "Skin",
+                                                                   "Bone & Joint",
+                                                                   "BSI",
+                                                                   "IAI",
+                                                                   "(para-)/Typhoid/iNTS"))]
+
+ggplot(UNITcost_averted_global2, aes(x=interaction(Exposure_Group), y=Median_unitcost,
+                                     fill=class)) + 
+  geom_bar(position=position_dodge(), stat="identity",
+           colour="black", # Use black outlines,
+           size=.3) +      # Thinner lines
+  geom_errorbar(aes(ymin=LOWIQR_unitcost, ymax=HIGIQR_unitcost),
+                size=.3,    # Thinner lines
+                width=.2,
+                position=position_dodge(.9))+
+  coord_flip()+
+  facet_grid(~Infectious.syndrome, switch = "y", scales = "free_y") +
+  theme(strip.background = element_blank(),
+        strip.placement = "inside",
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        panel.spacing = unit(0.35, "lines"),
+        plot.title = element_text(size = 12),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        legend.position = "none") +
+  ylab("Hospital cost per case ($)")+
+  xlab("Exposure group")+
+ ggtitle("Syndrome")
+
+TB <- UNITcost_averted_global2[Pathogen=="Mycobacterium tuberculosis"]
+nonTB <- UNITcost_averted_global2[Pathogen!="Mycobacterium tuberculosis"]
+
+ggplot(nonTB, aes(x=interaction(Exposure_Group), y=Median_unitcost,
+                                     fill=class)) + 
+  geom_bar(position=position_dodge(), stat="identity",
+           colour="black", # Use black outlines,
+           size=.3) +      # Thinner lines
+  geom_errorbar(aes(ymin=LOWIQR_unitcost, ymax=HIGIQR_unitcost),
+                size=.3,    # Thinner lines
+                width=.2,
+                position=position_dodge(.9))+
+  coord_flip()+
+  facet_grid(~Infectious.syndrome, switch = "y", scales = "free_y") +
+  theme(strip.background = element_blank(),
+        strip.placement = "inside",
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        panel.spacing = unit(0.35, "lines"),
+        plot.title = element_text(size = 12),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        legend.position = "none") +
+  ylab("Hospital cost per case ($)")+
+  xlab("Exposure group")+
+  ggtitle("Syndrome")
+
+ggplot(TB, aes(x=interaction(Exposure_Group), y=Median_unitcost,
+                  fill=class)) + 
+  geom_bar(position=position_dodge(), stat="identity",
+           colour="black", # Use black outlines,
+           size=.3) +      # Thinner lines
+  geom_errorbar(aes(ymin=LOWIQR_unitcost, ymax=HIGIQR_unitcost),
+                size=.3,    # Thinner lines
+                width=.2,
+                position=position_dodge(.9))+
+  coord_flip()+
+  facet_grid(~Infectious.syndrome, switch = "y", scales = "free_y") +
+  theme(strip.background = element_blank(),
+        strip.placement = "inside",
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        panel.spacing = unit(0.35, "lines"),
+        plot.title = element_text(size = 12),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        legend.position = "none") +
+  ylab("Hospital cost per case ($)")+
+  xlab("Exposure group")+
+  ggtitle("Syndrome")
