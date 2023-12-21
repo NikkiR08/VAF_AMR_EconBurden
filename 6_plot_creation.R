@@ -8,6 +8,10 @@ library(dplyr)
 library(stringr)
 library(ggplot2)
 
+#### !!! note throughout did last minute changes to change e.g. AFRO labelling to AFR
+### ideally this would be dealt with at start of analysis
+
+
 
 ### formatting ###
 options(scipen=10000) ## turn off scientific notation
@@ -471,6 +475,12 @@ regional_prod_path  <-output_hc[, lapply(.SD, sum, na.rm=TRUE),
 
 
 regional_prod_path[.id=="PAHO",.id := "AMRO"]
+regional_prod_path[.id=="AFRO" , .id := "AFR"]
+regional_prod_path[.id=="AMRO" , .id := "AMR"]
+regional_prod_path[.id=="EMRO" , .id := "EMR"]
+regional_prod_path[.id=="EURO" , .id := "EUR"]
+regional_prod_path[.id=="SEARO" , .id := "SEAR"]
+regional_prod_path[.id=="WPRO" , .id := "WPR"]
 
 ggplot(regional_prod_path  , aes(x = Pathogen, y = averted_HC,
                                fill=.id)) +
@@ -752,6 +762,14 @@ options(scipen=10000) ## turn off scientific notation
 
 ########### total costs ####################
 
+### renaming regions
+all.dt[.id=="AFRO", .id:="AFR"]
+all.dt[.id=="AMRO", .id:="AMR"]
+all.dt[.id=="EMRO", .id:="EMR"]
+all.dt[.id=="EURO", .id:="EUR"]
+all.dt[.id=="SEARO", .id:="SEAR"]
+all.dt[.id=="WPRO", .id:="WPR"]
+
 total.cost.plot <- function (all.dt){
   all.dt %>%
     ggplot(
@@ -932,6 +950,12 @@ regional_prod_path  <-output_hc[, lapply(.SD, sum, na.rm=TRUE),
                                        ".id"),
                                 .SDcols=c("averted_HC")]
 regional_prod_path[.id=="PAHO",.id := "AMRO"]
+regional_prod_path[.id=="AFRO", .id:="AFR"]
+regional_prod_path[.id=="AMRO", .id:="AMR"]
+regional_prod_path[.id=="EMRO", .id:="EMR"]
+regional_prod_path[.id=="EURO", .id:="EUR"]
+regional_prod_path[.id=="SEARO", .id:="SEAR"]
+regional_prod_path[.id=="WPRO", .id:="WPR"]
 
 all.dt2 <- merge(regional_prod_path,all.dt, by=c("Pathogen",".id"))
 
@@ -1022,7 +1046,7 @@ hospital_avert[.id=="AMRO" , .id := "AMR"]
 hospital_avert[.id=="EMRO" , .id := "EMR"]
 hospital_avert[.id=="EURO" , .id := "EUR"]
 hospital_avert[.id=="SEARO" , .id := "SEAR"]
-hospital_avert[.id=="WPRO" , .id := "WPRO"]
+hospital_avert[.id=="WPRO" , .id := "WPR"]
 
 ggplot(hospital_avert, aes(x = Pathogen, y = avert_cost_med)) +
   geom_col(fill="lightblue1") +
