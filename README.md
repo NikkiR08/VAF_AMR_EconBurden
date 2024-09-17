@@ -1,9 +1,10 @@
 # The Value Attribution Framework for Vaccines against AMR Economic Burden Estimation
-aka
+
 # The Economic Burden of Drug Resistant Infections & The Potential Impact of Vaccines
 
-> This is the repo (2) for the journal paper [link to be added once paper is on preprint]
-> Repo (1) relates to the Antmicrobial Resistance Unit Cost Repository: Available @ https://github.com/NikkiR08/AMR-UCR
+> This is the repo (2) for the paper for the paper: Naylor, Nichola R. and Hasso-Agopsowicz, Mateusz and Kim, Chaelin and Ma, Yixuan and Frost, Isabel and Abbas, Kaja and Aguilar, Gisela and Fuller, Naomi M. and Robotham, Julie V. and Jit, Mark, The Global Economic Burden of Antibiotic Resistant Infections and the Potential Impact of Bacterial Vaccines: A Modelling Study. Available at SSRN: https://ssrn.com/abstract=4676946 or http://dx.doi.org/10.2139/ssrn.4676946
+
+> Repo (1), which provides some of the inputs to this work, is the Antmicrobial Resistance Unit Cost Repository: Available @ https://github.com/NikkiR08/AMR-UCR
 
 
 ## Description
