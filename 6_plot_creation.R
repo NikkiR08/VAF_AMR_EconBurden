@@ -7,6 +7,7 @@ library(data.table)
 library(dplyr)
 library(stringr)
 library(ggplot2)
+library(patchwork) ## added in journal resub phase
 
 #### !!! note throughout did last minute changes to change e.g. AFRO labelling to AFR
 ### ideally this would be dealt with at start of analysis
@@ -25,21 +26,21 @@ unique(hospital_c$vaccine_id)
 ######### cleaning functions ################
 
 keep_vac <- c(               
- "Haemophilus influenzae type B_both_0.9_5 years_All_6, 10, 14 weeks"                                                           
-,"Salmonella Typhi_0.85_0.7_15 years_All_9 months"                                                                              
-, "Staphylococcus aureus_0.6_0.7_5 years_All_All age groups"                                                               
-, "E. coli - non-diarrhogenic_0.7_0.7_5 years_All except Diarrhoea_All age groups"                                      
-, "ETEC_0.6_0.7_5 years_Diarrhoea_6 months"                                                                   
-, "Group A streptococcus_0.7_0.7_5 years_All_6 weeks"                                                                            
-, "Klebsiella pneumoniae - all_0.7_0.7_5 years_All_All age groups"                                                      
-, "Streptococcus pneumoniae - Improved_both_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6 weeks & elderly age group"
-, "Pseudomonas aeruginosa_0.7_0.7_5 years_BSI, LRI and thorax infections_All age groups"                                         
-,"Enterococcus faecium_0.7_0.7_5 years_All_All age groups"                                                                      
-, "Salmonella paratyphi_0.7_0.7_5 years_All_9 months"                                                                            
-, "Acinetobacter baumannii - all_0.7_0.7_5 years_All_All age groups"                                                            
-, "Mycobacterium tuberculosis - Improved_0.8_0.7_10 years_All_0 weeks + boost every 10 years"                                    
-, "Shigella_0.6_0.7_5 years_All_6 months"
-,"Non-typhoidal Salmonella_0.8_0.7_5 years_All_6 weeks & 9 months" ) 
+  "Haemophilus influenzae type B_both_0.9_5 years_All_6, 10, 14 weeks"                                                           
+  ,"Salmonella Typhi_0.85_0.7_15 years_All_9 months"                                                                              
+  , "Staphylococcus aureus_0.6_0.7_5 years_All_All age groups"                                                               
+  , "E. coli - non-diarrhogenic_0.7_0.7_5 years_All except Diarrhoea_All age groups"                                      
+  , "ETEC_0.6_0.7_5 years_Diarrhoea_6 months"                                                                   
+  , "Group A streptococcus_0.7_0.7_5 years_All_6 weeks"                                                                            
+  , "Klebsiella pneumoniae - all_0.7_0.7_5 years_All_All age groups"                                                      
+  , "Streptococcus pneumoniae - Improved_both_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6 weeks & elderly age group"
+  , "Pseudomonas aeruginosa_0.7_0.7_5 years_BSI, LRI and thorax infections_All age groups"                                         
+  ,"Enterococcus faecium_0.7_0.7_5 years_All_All age groups"                                                                      
+  , "Salmonella paratyphi_0.7_0.7_5 years_All_9 months"                                                                            
+  , "Acinetobacter baumannii - all_0.7_0.7_5 years_All_All age groups"                                                            
+  , "Mycobacterium tuberculosis - Improved_0.8_0.7_10 years_All_0 weeks + boost every 10 years"                                    
+  , "Shigella_0.6_0.7_5 years_All_6 months"
+  ,"Non-typhoidal Salmonella_0.8_0.7_5 years_All_6 weeks & 9 months" ) 
 ### need to specify different ones for productivity as didn't group
 ## vaccine scenarios like had done for 
 
@@ -71,10 +72,10 @@ cleaning.dt <- function(hospital_c){
   ### need to specify for E.coli target syndromes so no double counting
   global_hospital[ , flag := 0]
   global_hospital[(vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months" & 
-                Infectious.syndrome!="Diarrhoea")|(
-                  vaccine_id=="E. coli - non-diarrhogenic_0.7_0.7_5 years_All except Diarrhoea_All age groups"& 
-                    Infectious.syndrome=="Diarrhoea"),
-             flag := 1]
+                     Infectious.syndrome!="Diarrhoea")|(
+                       vaccine_id=="E. coli - non-diarrhogenic_0.7_0.7_5 years_All except Diarrhoea_All age groups"& 
+                         Infectious.syndrome=="Diarrhoea"),
+                  flag := 1]
   global_hospital <-  global_hospital[flag==0]
   global_hospital <-  global_hospital[ ,-c("flag")]
   
@@ -94,24 +95,24 @@ cleaning.dt.prod <- function(hospital_c){
                   flag := 1]
   global_hospital <-  global_hospital[flag==0]
   global_hospital <-  global_hospital[ ,-c("flag")]
-
+  
   global_hospital[Infectious.syndrome=="BSI", Infectious.syndrome := "Bloodstream infections"]
   global_hospital[Infectious.syndrome=="UTI", Infectious.syndrome := "Urinary tract infections"]
   global_hospital[Infectious.syndrome=="TB", Infectious.syndrome := "Tuberculosis"]
   global_hospital[Antibiotic.class=="Methicillin", Antibiotic.class := "Penicillin"]
   global_hospital[Antibiotic.class=="Multi-drug resistance excluding extensive drug resistance in TB",
-              Antibiotic.class := "MDR"]
+                  Antibiotic.class := "MDR"]
   global_hospital[Antibiotic.class=="Multi-drug resistance in Salmonella Typhi and Paratyphi",
-              Antibiotic.class := "MDR"]
+                  Antibiotic.class := "MDR"]
   
   ### change vaccine ids for those we want to combine
   global_hospital[vaccine_id=="Haemophilus influenzae type B_0.93_0.9_5 years_All_6, 10, 14 weeks"|
-                     vaccine_id=="Haemophilus influenzae type B_0.69_0.9_5 years_All_6, 10, 14 weeks" ,
-                   vaccine_id := "Haemophilus influenzae type B_both_0.9_5 years_All_6, 10, 14 weeks" ]
+                    vaccine_id=="Haemophilus influenzae type B_0.69_0.9_5 years_All_6, 10, 14 weeks" ,
+                  vaccine_id := "Haemophilus influenzae type B_both_0.9_5 years_All_6, 10, 14 weeks" ]
   
   global_hospital[vaccine_id=="Streptococcus pneumoniae - Improved_0.7_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6 weeks & elderly age group"|
-                     vaccine_id=="Streptococcus pneumoniae - Improved_0.5_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6 weeks & elderly age group",
-                   vaccine_id := "Streptococcus pneumoniae - Improved_both_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6 weeks & elderly age group"]
+                    vaccine_id=="Streptococcus pneumoniae - Improved_0.5_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6 weeks & elderly age group",
+                  vaccine_id := "Streptococcus pneumoniae - Improved_both_0.9_5 years_BSI, CNS infections, Cardiac infections, LRI_6 weeks & elderly age group"]
   
   return(global_hospital)
 }
@@ -161,9 +162,9 @@ hospital_c[ , avert_cost_med := as.numeric(gsub(",", "", avert_cost_med))]
 
 
 classrank <- (hospital_c[, lapply(.SD, sum, na.rm=TRUE),
-                      by="class",
-                      .SDcols=c("cost_med",
-                                "avert_cost_med")])
+                         by="class",
+                         .SDcols=c("cost_med",
+                                   "avert_cost_med")])
 
 pathrank1 <- (hospital_c[, lapply(.SD, sum, na.rm=TRUE),
                          by="Pathogen",
@@ -181,12 +182,12 @@ hospital_c <- setorder(hospital_c, cost_med)
 
 ## get pathogen in order of cost for plots 
 order.test <- hospital_c[, lapply(.SD, sum, na.rm=TRUE),
-                                       by = c("Pathogen"),
-                                       .SDcols=c("cost_med")]
+                         by = c("Pathogen"),
+                         .SDcols=c("cost_med")]
 order.test <- order.test[order(order.test$cost_med,decreasing = TRUE)] 
 
 hospital_c$Pathogen <- factor(hospital_c$Pathogen , 
-                                   levels = order.test$Pathogen)
+                              levels = order.test$Pathogen)
 
 path <- hospital_c$Pathogen
 
@@ -199,7 +200,7 @@ abxcolours <-
             , levels(hospital_c$class)  )
 
 ggplot(hospital_c, aes(Pathogen, cost_med,
-                            fill=class)) +
+                       fill=class)) +
   geom_bar(stat="identity")+
   scale_fill_manual(values = abxcolours)+
   theme(axis.text.x = element_text(angle = -90),
@@ -210,7 +211,7 @@ ggplot(hospital_c, aes(Pathogen, cost_med,
   labs(fill="Antibiotic Class") 
 
 ggplot(hospital_c, aes(Pathogen, cost_med,
-                            fill=Infectious.syndrome)) +
+                       fill=Infectious.syndrome)) +
   geom_bar(stat="identity")+
   theme(axis.text.x = element_text(angle = -90),
         text= element_text(size = 15))+
@@ -262,8 +263,8 @@ prod_deaths <- as.data.table(prod_deaths)
 prod_deaths <- cleaning.dt.prod(prod_deaths)
 
 (prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
-            .SDcols=c("HC_cost",
-                      "averted_HC")])*1/1e9
+             .SDcols=c("HC_cost",
+                       "averted_HC")])*1/1e9
 
 ## setting class the same factor so graphs match
 
@@ -276,8 +277,8 @@ global_prod_deaths <- prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
                                             "averted_HC")]
 
 pathrankprod <- (prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
-                        by="Pathogen",
-                        .SDcols=c("HC_cost","averted_HC")])
+                             by="Pathogen",
+                             .SDcols=c("HC_cost","averted_HC")])
 ### get it so the productivity and hc costs are the same order of pathogens 
 ### and the same colours for antibiotic classes
 
@@ -293,10 +294,10 @@ abx_dic[Antibiotic.class=="Vancomycin", class:="glycopeptides"]
 global_prod_deaths <- merge(global_prod_deaths,abx_dic,by="Antibiotic.class")
 
 global_prod_deaths$Pathogen <- factor(global_prod_deaths$Pathogen , 
-                              levels = levels(path))
+                                      levels = levels(path))
 
 global_prod_deaths$class <- factor(global_prod_deaths$class , 
-                                      levels = levels(class))
+                                   levels = levels(class))
 
 ggplot(global_prod_deaths, aes(Pathogen, HC_cost,
                                fill=class)) +
@@ -331,9 +332,9 @@ regional_hospital_totals[WHO.Region=="PAHO", WHO.Region := "AMRO"]
 regional_hospital_totals <- getting_numbers_bk(regional_hospital_totals)
 ## regional
 totals.temp <- (regional_hospital_totals[, lapply(.SD, sum, na.rm=TRUE),
- by="WHO.Region",
- .SDcols=c("cost_med",
-           "avert_cost_med")])
+                                         by="WHO.Region",
+                                         .SDcols=c("cost_med",
+                                                   "avert_cost_med")])
 
 write.csv(totals.temp,file="outputs/regional_median_HC.csv")
 rm(totals.temp)
@@ -382,17 +383,17 @@ regional_hospital_totals[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
 save(regional_hospital_totals, file="outputs/regional_hospital_4additionalplots.RData")
 
 total_averted <- regional_hospital_totals[, lapply(.SD, sum, na.rm=TRUE),
-                                           by = c("Pathogen"),
-                                           .SDcols=c("avert_cost_med")]
+                                          by = c("Pathogen"),
+                                          .SDcols=c("avert_cost_med")]
 
 total_averted_los <-  regional_hospital_totals[, lapply(.SD, sum, na.rm=TRUE),
-                                              by = c("Pathogen"),
-                                              .SDcols=c("avert_days_med")]
+                                               by = c("Pathogen"),
+                                               .SDcols=c("avert_days_med")]
 
 total_averted <- merge(total_averted, total_averted_los, by="Pathogen")
 
 ggplot(regional_hospital_totals, aes(x = Pathogen, y = avert_cost_med,
-                                              fill=WHO.Region)) +
+                                     fill=WHO.Region)) +
   geom_col(position = "dodge") +
   geom_errorbar(aes(ymin = avert_cost_lo, ymax = avert_cost_hi),
                 position = position_dodge(0.9), width = .2)+
@@ -405,7 +406,7 @@ ggplot(regional_hospital_totals, aes(x = Pathogen, y = avert_cost_med,
 
 
 ggplot(regional_hospital_totals, aes(x = Pathogen, y = avert_days_med,
-                                                fill=WHO.Region)) +
+                                     fill=WHO.Region)) +
   geom_col(position = "dodge") +
   geom_errorbar(aes(ymin = avert_days_lo, ymax = avert_days_hi),
                 position = position_dodge(0.9), width = .2)+
@@ -431,26 +432,26 @@ save(prod_deaths, file="outputs/prod_4additionalplots.RData")
 
 ### total productivity loss by syndrome
 syndromerank <- prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
-                  by = c("Infectious.syndrome"),
-                  .SDcols=c("HC_cost")]
+                            by = c("Infectious.syndrome"),
+                            .SDcols=c("HC_cost")]
 
 write.csv(syndromerank, file="outputs/global_syndrome_rankings_productivity.csv")
 
 region_prod  <- prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
-                         by = c(
-                           ".id"),
-                         .SDcols=c("averted_HC")]
+                            by = c(
+                              ".id"),
+                            .SDcols=c("averted_HC")]
 
 syndrome_prod  <-prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
-                           by = c(
-                             "Infectious.syndrome"),
-                           .SDcols=c("averted_HC")]
+                             by = c(
+                               "Infectious.syndrome"),
+                             .SDcols=c("averted_HC")]
 
 ### averted by pathogen
 regional_prod_path  <-prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
-                                    by = c("Pathogen",
-                                           ".id"),
-                                    .SDcols=c("averted_HC")]
+                                  by = c("Pathogen",
+                                         ".id"),
+                                  .SDcols=c("averted_HC")]
 
 ggplot(regional_prod_path, aes(x = Pathogen, y = averted_HC,
                                fill=.id)) +
@@ -469,9 +470,9 @@ output_hc <- as.data.table(output_hc)
 output_hc <- cleaning.dt.prod(output_hc)
 
 regional_prod_path  <-output_hc[, lapply(.SD, sum, na.rm=TRUE),
-                                  by = c("Pathogen",
-                                         ".id"),
-                                  .SDcols=c("averted_HC")]
+                                by = c("Pathogen",
+                                       ".id"),
+                                .SDcols=c("averted_HC")]
 
 
 regional_prod_path[.id=="PAHO",.id := "AMRO"]
@@ -483,7 +484,7 @@ regional_prod_path[.id=="SEARO" , .id := "SEAR"]
 regional_prod_path[.id=="WPRO" , .id := "WPR"]
 
 ggplot(regional_prod_path  , aes(x = Pathogen, y = averted_HC,
-                               fill=.id)) +
+                                 fill=.id)) +
   geom_col(position = "dodge") +
   xlab("Pathogen") +
   ylab("Averted Productivity Losses (WLYL)") +
@@ -507,8 +508,8 @@ global_hospital_totals[Infectious.syndrome=="TB", Infectious.syndrome := "Tuberc
 global_hospital_totals <- getting_numbers_bk(global_hospital_totals)
 
 vaccine_hospital <- global_hospital_totals[, lapply(.SD, sum, na.rm=TRUE),
-                                        by = c("vaccine_id"),
-                                        .SDcols=c("avert_cost_med")]
+                                           by = c("vaccine_id"),
+                                           .SDcols=c("avert_cost_med")]
 
 prod_deaths <- read.csv("outputs/productivity_loss_deaths_all.csv")
 prod_deaths <- as.data.table(prod_deaths)
@@ -525,8 +526,8 @@ prod_deaths[Antibiotic.class=="Multi-drug resistance in Salmonella Typhi and Par
             Antibiotic.class := "MDR"]
 
 vaccine_productivity <- prod_deaths[, lapply(.SD, sum, na.rm=TRUE),
-         by = c("vaccine_id"),
-         .SDcols=c("averted_HC")]
+                                    by = c("vaccine_id"),
+                                    .SDcols=c("averted_HC")]
 
 totalcostingtemp <- merge(vaccine_hospital,vaccine_productivity, by="vaccine_id")
 
@@ -547,13 +548,13 @@ fc.prod[Infectious.syndrome=="UTI", Infectious.syndrome := "Urinary tract infect
 fc.prod[Infectious.syndrome=="TB", Infectious.syndrome := "Tuberculosis"]
 fc.prod[Antibiotic.class=="Methicillin", Antibiotic.class := "Penicillin"]
 fc.prod[Antibiotic.class=="Multi-drug resistance excluding extensive drug resistance in TB",
-            Antibiotic.class := "MDR"]
+        Antibiotic.class := "MDR"]
 fc.prod[Antibiotic.class=="Multi-drug resistance in Salmonella Typhi and Paratyphi",
-            Antibiotic.class := "MDR"]
+        Antibiotic.class := "MDR"]
 
 (fc.prod[, lapply(.SD, sum, na.rm=TRUE),
-             .SDcols=c("wage_loss_total",
-                       "wage_loss_averted")])*1/1e9
+         .SDcols=c("wage_loss_total",
+                   "wage_loss_averted")])*1/1e9
 
 ##### sc2
 sc2.prod <- read.csv("outputs/productivity_loss_deaths_all_sc2.csv")
@@ -567,13 +568,13 @@ sc2.prod[Infectious.syndrome=="UTI", Infectious.syndrome := "Urinary tract infec
 sc2.prod[Infectious.syndrome=="TB", Infectious.syndrome := "Tuberculosis"]
 sc2.prod[Antibiotic.class=="Methicillin", Antibiotic.class := "Penicillin"]
 sc2.prod[Antibiotic.class=="Multi-drug resistance excluding extensive drug resistance in TB",
-        Antibiotic.class := "MDR"]
+         Antibiotic.class := "MDR"]
 sc2.prod[Antibiotic.class=="Multi-drug resistance in Salmonella Typhi and Paratyphi",
-        Antibiotic.class := "MDR"]
+         Antibiotic.class := "MDR"]
 
 (sc2.prod[, lapply(.SD, sum, na.rm=TRUE),
-         .SDcols=c("HC_cost",
-                   "averted_HC")])*1/1e9
+          .SDcols=c("HC_cost",
+                    "averted_HC")])*1/1e9
 
 load("outputs/prod_4additionalplots.RData")
 sc1.prod <- prod_deaths 
@@ -593,10 +594,10 @@ all.prod.methods <- merge(sc1.prod,sc2.prod, by=c(".id",
                                                   "Infectious.syndrome"))
 
 all.prod.methods <- merge(all.prod.methods,fc.prod, by.x=c(".id",
-                                                  "Pathogen",
-                                                  "vaccine_id",
-                                                  "Antibiotic.class",
-                                                  "Infectious.syndrome"),
+                                                           "Pathogen",
+                                                           "vaccine_id",
+                                                           "Antibiotic.class",
+                                                           "Infectious.syndrome"),
                           by.y=c("who.region",
                                  "Pathogen",
                                  "vaccine_id",
@@ -607,16 +608,16 @@ save(all.prod.methods, file="outputs/prod_additional4plots_sc2.RData")
 
 all.prod.methods.long <- data.table::melt(all.prod.methods, id.vars = c(".id",
                                                                         "Pathogen" ,
-                                          "Infectious.syndrome" ,
-                                          "vaccine_id"), 
-                 measure.vars = list(c("sc1_averted",
-                                       "sc2_averted",
-                                       "fc_averted"),
-                                     c('sc1_total',
-                                       "sc2_total",
-                                       "fc_total")),
-                 value.name = c('averted','total'),
-                 variable.name="scenario")
+                                                                        "Infectious.syndrome" ,
+                                                                        "vaccine_id"), 
+                                          measure.vars = list(c("sc1_averted",
+                                                                "sc2_averted",
+                                                                "fc_averted"),
+                                                              c('sc1_total',
+                                                                "sc2_total",
+                                                                "fc_total")),
+                                          value.name = c('averted','total'),
+                                          variable.name="scenario")
 all.prod.methods.long[scenario==1 , scenario := "Human Capital Scenario 1"]
 all.prod.methods.long[scenario==2 , scenario := "Human Capital Scenario 2"]
 all.prod.methods.long[scenario==3 , scenario := "Friction Cost"]
@@ -625,20 +626,20 @@ all.prod.methods.long[scenario==3 , scenario := "Friction Cost"]
 ### group by region
 
 all.prod.methods.global <- all.prod.methods[, lapply(.SD, sum, na.rm=TRUE),
-                                by = c(".id"),
-                                .SDcols=c("sc1_total",
-                                          "sc2_total",
-                                          "fc_total")]
+                                            by = c(".id"),
+                                            .SDcols=c("sc1_total",
+                                                      "sc2_total",
+                                                      "fc_total")]
 
 all.prod.methods.global.temp <- data.table::melt(all.prod.methods.global, id.vars = c(".id"), 
-                                          measure.vars =c('sc1_total',
-                                                                "sc2_total"),
-                                          value.name = c('total'),
-                                          variable.name="scenario")
+                                                 measure.vars =c('sc1_total',
+                                                                 "sc2_total"),
+                                                 value.name = c('total'),
+                                                 variable.name="scenario")
 
 all.prod.methods.fc <- all.prod.methods.global[ , c(".id","fc_total")]
 all.prod.methods.global <- merge(all.prod.methods.global.temp,all.prod.methods.fc,by=".id",
-                                all=TRUE)
+                                 all=TRUE)
 
 all.prod.methods.global[scenario=="sc1_total" , scenario := "Human Capital Scenario 1"]
 all.prod.methods.global[scenario=="sc2_total" , scenario := "Human Capital Scenario 2"]
@@ -717,9 +718,9 @@ load("outputs/regional_hospital_4additionalplots.RData") ## adding sc2 for produ
 load("outputs/prod_additional4plots_sc2.RData")
 
 regional_prod_deaths <- all.prod.methods[, lapply(.SD, sum, na.rm=TRUE),
-                                    by = c(".id","Pathogen","vaccine_id"),
-                                    .SDcols=c("sc1_total","sc2_total",
-                                              "sc1_averted","sc2_averted")]
+                                         by = c(".id","Pathogen","vaccine_id"),
+                                         .SDcols=c("sc1_total","sc2_total",
+                                                   "sc1_averted","sc2_averted")]
 
 
 ### merge together
@@ -825,7 +826,7 @@ total.cost.plot <- function (all.dt){
           b = 5
         )
       )
-     
+      
       , legend.position = c(0.20, 0.98)
       , legend.title = element_blank()
       , plot.title = element_text(
@@ -849,7 +850,7 @@ total.cost.plot <- function (all.dt){
           size = 8
         )
         , nrow = 1) )+
-  theme(panel.grid.major.y =element_line(colour="black"))+
+    theme(panel.grid.major.y =element_line(colour="black"))+
     xlab("Cost (USD)")+
     ylab("Microbe")
 }
@@ -866,7 +867,7 @@ all.dt[sc2_averted<sc1_averted, min_prod := sc2_averted]
 all.dt[sc1_averted<sc2_averted, max_prod := sc2_averted]
 all.dt[sc2_averted<sc1_averted, max_prod := sc1_averted]
 
-all.dt %>%
+f6_1 <- all.dt %>%
   ggplot() +
   geom_pointrange(
     mapping = aes(
@@ -885,10 +886,10 @@ all.dt %>%
     labels = scales::dollar_format(scale = 1e-6, suffix = "mn")
     , position = "top"
   ) +
-  # labs(
-  #   title = "Productivity Losses Averted"
-  #   , subtitle = "Point estimates are base case scenario. The line represents min and max values across scenarios \n"
-  # ) +
+  labs(
+    title = "(A) Averted Labour Productivity Losses ($)",
+    y = "Pathogen"  # Optional, if needed
+  ) +
   theme_minimal() +
   theme(
     panel.grid.minor.x = element_blank()
@@ -959,7 +960,7 @@ regional_prod_path[.id=="WPRO", .id:="WPR"]
 
 all.dt2 <- merge(regional_prod_path,all.dt, by=c("Pathogen",".id"))
 
-all.dt2 %>%
+f6_2 <- all.dt2 %>%
   ggplot() +
   geom_point(
     mapping = aes(
@@ -975,6 +976,10 @@ all.dt2 %>%
   scale_x_log10(
     labels = unit_format(unit = "mn", scale = 1e-6)
     , position = "top"
+  ) +
+  labs(
+    title = "(B) Averted Working-Life-Years-Lost",
+    y = "Pathogen"  # Optional, if needed
   ) +
   theme_minimal() +
   theme(
@@ -1025,7 +1030,16 @@ all.dt2 %>%
   )
 
 
-######### figure 4 ##############
+# tiff("Figure6.tiff", units="in", width=15, height=10, res=300)
+# 
+# # Arrange with widths (2:1 ratio) and p2 at half height
+# combined_plot <- f6_1/f6_2
+# combined_plot
+# 
+# dev.off()
+###### now combined into Figure 5 in 6b_journal plots
+
+######### figure 4 x not figure 4 anymore ##############
 ###!!! if time check dataset all.dt2 not had bugs in creating/merging etc.
 
 ### transform dataset
@@ -1048,20 +1062,23 @@ hospital_avert[.id=="EURO" , .id := "EUR"]
 hospital_avert[.id=="SEARO" , .id := "SEAR"]
 hospital_avert[.id=="WPRO" , .id := "WPR"]
 
+tiff("Figure5.tiff", units="in", width=15, height=7, res=300)
+
 ggplot(hospital_avert, aes(x = Pathogen, y = avert_cost_med)) +
   geom_col(fill="lightblue1") +
   geom_errorbar(aes(ymin = avert_cost_lo, ymax = avert_cost_hi),
                 position = position_dodge(0.9), width = .2, color='midnightblue')+
   geom_point(aes(y = transf_fact * avert_days_med), size=2, color='darkslategrey')+
   facet_wrap(~.id)+ 
-  scale_y_continuous(labels = scales::label_number_si(),
+  scale_y_continuous(labels = scales::label_number(accuracy = 0.1, scale_cut = scales::cut_short_scale()),
                      sec.axis = sec_axis(trans = ~ . / transf_fact, 
                                          name = "Total Averted Bed Days (for Points)",
-                                         labels = scales::label_number_si()))+
+                                         labels = scales::label_number(accuracy = 0.1, scale_cut = scales::cut_short_scale())))+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-      text = element_text(size = 15))+
+        text = element_text(size = 15))+
   ylab("Total Averted Hospital Cost (for Bars)")
 
+dev.off()
 
 ##### output table for total impacts pre and post vaccine ####
 
@@ -1072,17 +1089,17 @@ hospital_c <-    hospital_c[hospital_c$vaccine_id %in% keep_vac]
 ### trying to account for this
 ### accounting for duplication of E. coli total amounts for ETEC & EXPEC
 hospital_c[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
-                         cost_med :=0]
+           cost_med :=0]
 hospital_c[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
-                         cost_lo :=0]
+           cost_lo :=0]
 hospital_c[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
-                         cost_hi :=0]
+           cost_hi :=0]
 hospital_c[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
-                         days_med :=0]
+           days_med :=0]
 hospital_c[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
-                         days_lo :=0]
+           days_lo :=0]
 hospital_c[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
-                         days_hi :=0]
+           days_hi :=0]
 
 
 #### Global productivity 
@@ -1090,11 +1107,11 @@ hospital_c[vaccine_id=="ETEC_0.6_0.7_5 years_Diarrhoea_6 months",
 load("outputs/prod_additional4plots_sc2.RData")
 
 global_prod_deaths <- all.prod.methods[, lapply(.SD, sum, na.rm=TRUE),
-                                  by = c("Pathogen","vaccine_id"),
-                                  .SDcols=c("sc1_averted",
-                                            "sc1_total" ,
-                                            "sc2_averted" ,
-                                            "sc2_total" )]
+                                       by = c("Pathogen","vaccine_id"),
+                                       .SDcols=c("sc1_averted",
+                                                 "sc1_total" ,
+                                                 "sc2_averted" ,
+                                                 "sc2_total" )]
 
 all_results_vac <- merge(global_prod_deaths, hospital_c,
                          by="vaccine_id")
@@ -1103,8 +1120,8 @@ write.csv(all_results_vac, file="outputs/all_results_vac.csv")
 
 ### regional pathogen ranking
 pathrank <- all.prod.methods[, lapply(.SD, sum, na.rm=TRUE),
-                         by=c("vaccine_id",".id"),
-                         .SDcols=c("sc1_total")]
+                             by=c("vaccine_id",".id"),
+                             .SDcols=c("sc1_total")]
 pathrank <- split(pathrank,by=".id")
 af <- pathrank$AFRO
 am <- pathrank$AMRO
@@ -1114,8 +1131,8 @@ sea <- pathrank$SEARO
 wp <- pathrank$WPRO
 
 region.prod <- all.prod.methods[, lapply(.SD, sum, na.rm=TRUE),
-                             by=c(".id"),
-                             .SDcols=c("sc1_total")]
+                                by=c(".id"),
+                                .SDcols=c("sc1_total")]
 
 
 #### unit cost plotting code #####
@@ -1199,16 +1216,21 @@ temp <- UNITcost_averted_global2 %>%
   group_by(Infectious.syndrome) %>% summarise(mM=mean(Median_unitcost))
 
 UNITcost_averted_global2[ ,Infectious.syndrome:=factor(Infectious.syndrome,
-                                                          levels=c("RTI/TB",
-                                                                   "UTI",
-                                                                   "Cardiac",
-                                                                   "CNS",
-                                                                   "Diarrhoea",
-                                                                   "Skin",
-                                                                   "Bone & Joint",
-                                                                   "BSI",
-                                                                   "IAI",
-                                                                   "(para-)/Typhoid/iNTS"))]
+                                                       levels=c("RTI/TB",
+                                                                "UTI",
+                                                                "Cardiac",
+                                                                "CNS",
+                                                                "Diarrhoea",
+                                                                "Skin",
+                                                                "Bone & Joint",
+                                                                "BSI",
+                                                                "IAI",
+                                                                "(para-)/Typhoid/iNTS"))]
+
+
+### addition 2025 - relabelling to make plot look better
+UNITcost_averted_global2[ Infectious.syndrome== "(para-)/Typhoid/iNTS",
+                          Infectious.syndrome:= "(p-)T & iNTS"]
 
 ggplot(UNITcost_averted_global2, aes(x=interaction(Exposure_Group), y=Median_unitcost,
                                      fill=class)) + 
@@ -1231,36 +1253,14 @@ ggplot(UNITcost_averted_global2, aes(x=interaction(Exposure_Group), y=Median_uni
         legend.position = "none") +
   ylab("Hospital cost per case ($)")+
   xlab("Exposure group")+
- ggtitle("Syndrome")
+  ggtitle("Syndrome")
 
 TB <- UNITcost_averted_global2[Pathogen=="Mycobacterium tuberculosis"]
 nonTB <- UNITcost_averted_global2[Pathogen!="Mycobacterium tuberculosis"]
 
-ggplot(nonTB, aes(x=interaction(Exposure_Group), y=Median_unitcost,
-                                     fill=class)) + 
-  geom_bar(position=position_dodge(), stat="identity",
-           colour="black", # Use black outlines,
-           size=.3) +      # Thinner lines
-  geom_errorbar(aes(ymin=LOWIQR_unitcost, ymax=HIGIQR_unitcost),
-                size=.3,    # Thinner lines
-                width=.2,
-                position=position_dodge(.9))+
-  coord_flip()+
-  facet_grid(~Infectious.syndrome, switch = "y", scales = "free_y") +
-  theme(strip.background = element_blank(),
-        strip.placement = "inside",
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-        panel.spacing = unit(0.35, "lines"),
-        plot.title = element_text(size = 12),
-        axis.title.x = element_text(size = 12),
-        axis.title.y = element_text(size = 12),
-        legend.position = "none") +
-  ylab("Hospital cost per case ($)")+
-  xlab("Exposure group")+
-  ggtitle("Syndrome")
 
-ggplot(TB, aes(x=interaction(Exposure_Group), y=Median_unitcost,
-                  fill=class)) + 
+p1 <- ggplot(nonTB, aes(x=interaction(Exposure_Group), y=Median_unitcost,
+                        fill=class)) + 
   geom_bar(position=position_dodge(), stat="identity",
            colour="black", # Use black outlines,
            size=.3) +      # Thinner lines
@@ -1280,4 +1280,67 @@ ggplot(TB, aes(x=interaction(Exposure_Group), y=Median_unitcost,
         legend.position = "none") +
   ylab("Hospital cost per case ($)")+
   xlab("Exposure group")+
-  ggtitle("Syndrome")
+  ggtitle("(A) Syndrome")
+
+### rename TB to help plot saving
+TB[Exposure_Group=="mdr Mycobacterium tuberculosis", Exposure_Group:="MDR TB"]
+
+p2 <- ggplot(TB, aes(x=interaction(Exposure_Group), y=Median_unitcost,
+                     fill=class)) + 
+  geom_bar(position=position_dodge(), stat="identity",
+           colour="black", # Use black outlines,
+           size=.3) +      # Thinner lines
+  geom_errorbar(aes(ymin=LOWIQR_unitcost, ymax=HIGIQR_unitcost),
+                size=.3,    # Thinner lines
+                width=.2,
+                position=position_dodge(.9))+
+  coord_flip()+
+  facet_grid(~Infectious.syndrome, switch = "y", scales = "free_y") +
+  theme(strip.background = element_blank(),
+        strip.placement = "inside",
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        panel.spacing = unit(0.35, "lines"),
+        plot.title = element_text(size = 12),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        legend.position = "none") +
+  ylab("Hospital cost per case ($)")+
+  xlab("Exposure group")+
+  ggtitle("(B) Syndrome")
+
+# Wrap p2 inside wrap_elements() to shrink its height
+p2_wrapped <- wrap_elements(full = p2) / plot_spacer() # Spacer makes p2 take less space
+
+tiff("Figure3.tiff", units="in", width=17.5, height=7, res=300)
+
+# Arrange with widths (2:1 ratio) and p2 at half height
+combined_plot <- (p1 | p2_wrapped) + 
+  plot_layout(widths = c(3.5, 1), heights = c(1, 0.5))
+combined_plot
+
+dev.off()
+# ###############
+# 
+# ggplot(nonTB, aes(x=interaction(Exposure_Group), y=Median_unitcost,
+#                   fill=class)) + 
+#   geom_bar(position=position_dodge(), stat="identity",
+#            colour="black", # Use black outlines,
+#            size=.3) +      # Thinner lines
+#   geom_errorbar(aes(ymin=LOWIQR_unitcost, ymax=HIGIQR_unitcost),
+#                 size=.3,    # Thinner lines
+#                 width=.2,
+#                 position=position_dodge(.9))+
+#   coord_flip()+
+#   facet_grid(~Infectious.syndrome, switch = "x", scales = "free_y") +
+#   scale_y_continuous(position = "right")+
+#   theme(strip.background = element_blank(),
+#         strip.placement = "inside",
+#         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+#         panel.spacing = unit(0.35, "lines"),
+#         plot.title = element_text(size = 12, vjust=10),
+#         axis.title.x = element_text(size = 12),
+#         axis.title.y = element_text(size = 12),
+#         legend.position = "none") +
+#   ylab("Hospital cost per case ($)")+
+#   xlab("Exposure group")+
+#   ggtitle("Syndrome")
