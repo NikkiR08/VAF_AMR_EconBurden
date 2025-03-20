@@ -1,6 +1,8 @@
 ############ THIS SCRIPT IS A COMPILATION OF OTHER SCRIPTS WRITTEN DURING
 ########### THE MANUSCRIPT SUBMISSION PROCESS
 
+############# duplication likely as copied over from 3 different editing rounds to keep in 1 place
+
 #### be careful running as does save data sets and plots (latest figure 4 & 5)
 #### although some also currently hashed-out to avoid overwriting
 
