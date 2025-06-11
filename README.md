@@ -11,7 +11,7 @@
 
 This repo combines epidemiology estimates (provided by Chaelin Kim based on her work in this paper:https://www.medrxiv.org/content/10.1101/2022.05.08.22274821v2 & code in this repository : https://github.com/vaccine-impact/vaccine_amr ), with economic unit cost estimates (from https://github.com/NikkiR08/AMR-UCR). Inflation and exchange rate data are used to preserve local currency units and local economic shifts throughout, where possible. All cost results are then presented in 2019 USD.
 
-Note the accompanying paper is going through review processes and therefore this repository is subject to change until publication.
+Follow the numerical order of the scripts, starting with those in the "1_creating_DRI_estimates" subfolder, then following from "1a_sampling...". 
 
 ## Contents
 
